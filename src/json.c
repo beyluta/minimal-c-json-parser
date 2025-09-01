@@ -55,12 +55,28 @@ static TypeJSON GetJSONType(const char c) {
   switch ((int)c) {
   default:
     return NUMBER;
-  case '"':
+  case DOUBLE_QUOTES:
     return STRING;
-  case '[':
+  case SQUARE_OPEN:
     return ARRAY;
-  case '{':
+  case CURLY_OPEN:
     return OBJECT;
+  case 'n':
+    return JNULL;
+  case 'f':
+  case 't':
+    return BOOLEAN;
+  }
+}
+
+static bool TypeRequiresDelimiter(TypeJSON type) {
+  switch (type) {
+  case NUMBER:
+  case BOOLEAN:
+  case JNULL:
+    return false;
+  default:
+    return true;
   }
 }
 
@@ -73,11 +89,10 @@ static StatusJSON GetValue(StringJSON src, const ssize_t iStartAt,
   size_t fieldNestingLevel = 0;
   bool isCurrentWordValue = false;
   bool isCurrentIndexInsideDoubleQuotes = false;
-  TypeJSON type = -1;
+  TypeJSON type = UNDEFINED;
   for (size_t i = iStartAt + 1; i < src.length; i++) {
-    // Ignore spaces unless type is number. We ignore spaces for numbers because
-    // we handle this case in the number condition a few lines down
-    if (src.str[i] == SPACE && type != NUMBER)
+    // Ignoring spaces unless the type requires delimiters
+    if (src.str[i] == SPACE && TypeRequiresDelimiter(type))
       continue;
 
     // This is needed so that we know that we can start reading the value
@@ -86,8 +101,13 @@ static StatusJSON GetValue(StringJSON src, const ssize_t iStartAt,
       continue;
     }
 
-    // Check if the word being read is a json value instead of a key
-    if (isCurrentWordValue && type < 0) {
+    // Skip this iteration if the still haven't found a value to read
+    if (!isCurrentWordValue) {
+      continue;
+    }
+
+    // Make sure to assign a type to the current json being read
+    if (type == UNDEFINED) {
       type = GetJSONType(src.str[i]);
       iStartWord = i;
 
@@ -102,16 +122,30 @@ static StatusJSON GetValue(StringJSON src, const ssize_t iStartAt,
 
     // Strings are the most basic type to parse because we just need to return
     // the indexes of the start and end of the double quotes
-    if (isCurrentWordValue && src.str[i] == DOUBLE_QUOTES &&
-        src.str[i - 1] != BACKSLASH && type == STRING) {
+    if (src.str[i] == DOUBLE_QUOTES && src.str[i - 1] != BACKSLASH &&
+        type == STRING) {
       iEndWord = i;
       break;
+    }
+
+    // Booleans and nulls are basically the same. We just need to read until the
+    // end of the stream and return whatever has been read
+    if (type == BOOLEAN || type == JNULL) {
+      if (src.str[i] == SPACE || src.str[i] == COMMA) {
+        iEndWord = i - 1;
+        break;
+      }
+
+      if (i >= src.length - 1) {
+        iEndWord = i;
+        break;
+      }
     }
 
     // Numbers are a little trickier, we need to make sure to return the number
     // as soon as there aren't any digits left in the current readable stream.
     // This excludes some annoyances like the period to declare decimal values
-    if (isCurrentWordValue && type == NUMBER) {
+    if (type == NUMBER) {
       if (src.str[i] == '.') {
         continue;
       }
@@ -125,19 +159,16 @@ static StatusJSON GetValue(StringJSON src, const ssize_t iStartAt,
         iEndWord = i;
         break;
       }
-
-      continue;
     }
 
     // Arrays are sort of basic too though it needs a little more work. We need
     // to make sure to disregard any values inside double quotes since these are
     // just user strings. As well as keep track of the amount of square brackets
     // for nested arrays
-    if (isCurrentWordValue && type == ARRAY) {
+    if (type == ARRAY) {
       if (src.str[i] == DOUBLE_QUOTES && i - 1 > 0 &&
           src.str[i - 1] != BACKSLASH) {
-        isCurrentIndexInsideDoubleQuotes =
-            isCurrentIndexInsideDoubleQuotes ? false : true;
+        isCurrentIndexInsideDoubleQuotes = !isCurrentIndexInsideDoubleQuotes;
       }
 
       if (isCurrentIndexInsideDoubleQuotes)
@@ -157,7 +188,7 @@ static StatusJSON GetValue(StringJSON src, const ssize_t iStartAt,
 
     // Objects are basically the same as arrays but to make the code more
     // readable I separated them, but they just do the same thing essentially
-    if (isCurrentWordValue && type == OBJECT) {
+    if (type == OBJECT) {
       if (src.str[i] == DOUBLE_QUOTES && i - 1 > 0 &&
           src.str[i - 1] != BACKSLASH) {
         isCurrentIndexInsideDoubleQuotes = !isCurrentIndexInsideDoubleQuotes;

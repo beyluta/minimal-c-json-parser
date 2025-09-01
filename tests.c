@@ -4,7 +4,7 @@
 #include <string.h>
 
 constexpr char CHECKMARK[] = "\xE2\x9C\x93\n";
-constexpr unsigned char COUNT_CASES = 5;
+constexpr unsigned char COUNT_CASES = 7;
 static unsigned char tests = 0;
 
 void tryAssert(char *case1, char *case2, const char *message) {
@@ -16,9 +16,11 @@ void tryAssert(char *case1, char *case2, const char *message) {
 }
 
 int main() {
-  char cJsonStr[] = "{ \"progName\": \"library\", \"version\": 1.0, \"tags\": "
+  char cJsonStr[] = "{ \"progName\": \"library\","
+                    "\"version\": 1.0, \"tags\": "
                     "[\"C\", \"C++\"], \"metadata\": { \"origin\": "
-                    "\"unknown\", \"device\": { \"pc\": \"Desktop\" } } }";
+                    "\"unknown\", \"device\": { \"pc\": \"Desktop\" } }, "
+                    "\"isCompliant\": false, \"lastUpdated\": null }";
 
   StringJSON jsonStr;
   StatusJSON status;
@@ -38,6 +40,28 @@ int main() {
   }
 
   tryAssert(cResult, "library", "String");
+
+  // Testing for Booleans
+  if ((status = GetProperty(jsonStr, &result, "isCompliant") != FUNC_SUCCESS)) {
+    return status;
+  }
+
+  if ((status = JSONToStr(result, cResult) != FUNC_SUCCESS)) {
+    return status;
+  }
+
+  tryAssert(cResult, "false", "Boolean");
+
+  // Testing for Nulls
+  if ((status = GetProperty(jsonStr, &result, "lastUpdated") != FUNC_SUCCESS)) {
+    return status;
+  }
+
+  if ((status = JSONToStr(result, cResult) != FUNC_SUCCESS)) {
+    return status;
+  }
+
+  tryAssert(cResult, "null", "Null");
 
   // Testing for Numbers
   if ((status = GetProperty(jsonStr, &result, "version") != FUNC_SUCCESS)) {

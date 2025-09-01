@@ -6,7 +6,15 @@
 
 constexpr unsigned short JSONBUFFSIZE = USHRT_MAX;
 typedef enum : short { MEMORY_FAILURE = -1, FUNC_SUCCESS = 0 } StatusJSON;
-typedef enum : char { NUMBER = 0, OBJECT = 1, STRING = 2, ARRAY = 3 } TypeJSON;
+typedef enum : char {
+  UNDEFINED = -1,
+  NUMBER = 0,
+  OBJECT = 1,
+  STRING = 2,
+  ARRAY = 3,
+  BOOLEAN = 4,
+  JNULL = 5
+} TypeJSON;
 typedef enum : unsigned char {
   SQUARE_OPEN = '[',
   SQUARE_CLOSE = ']',
@@ -16,8 +24,8 @@ typedef enum : unsigned char {
   COLON = ':',
   COMMA = ',',
   BACKSLASH = '\\',
-  SPACE = ' '
-} DelimJSON;
+  SPACE = ' ',
+} TokenJSON;
 
 typedef struct {
   size_t length;

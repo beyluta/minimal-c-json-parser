@@ -6,13 +6,10 @@ It supports extracting values from JSON strings, handling:
 
 - **Strings**
 - **Numbers**
-- **Arrays**
-- **Objects** (including nested properties)
-
-Not yet supported but planned for the future:
-
-- **NULL**
 - **Booleans**
+- **Arrays**
+- **Objects**
+- **NULL**
 
 The parser works with a custom `StringJSON` structure and avoids dynamic memory allocation by using fixed-size buffers.
 
@@ -56,6 +53,5 @@ We want to extract the `progName` field into a readable C-Style-String (aka char
 
 - Very small buffer size of `USHRT_MAX` supported. Bigger JSON files will fail to parse.
 - Does not validate JSON data. Make sure yours is compliant.
-- No support for `boolean` values (`true` or `false` will fail).
 - Numbers are parsed as raw strings (do the convertion yourself with `strtol` or `atoi`).
 - Not a fully compliant JSON parser. Designed for lightweight extraction only.
