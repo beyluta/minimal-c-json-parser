@@ -146,7 +146,7 @@ static StatusJSON GetValue(StringJSON src, const ssize_t iStartAt,
     // as soon as there aren't any digits left in the current readable stream.
     // This excludes some annoyances like the period to declare decimal values
     if (type == NUMBER) {
-      if (src.str[i] == '.') {
+      if (src.str[i] == PERIOD) {
         continue;
       }
 
@@ -273,12 +273,133 @@ StatusJSON GetProperty(StringJSON src, StringJSON *dest, const char *target) {
   return FUNC_SUCCESS;
 }
 
+static PrimitiveJSON GetUnderlyingType(PrimitiveJSON type) {
+  switch (type) {
+  default:
+  case JSON_INT_ARR:
+    return JSON_INT;
+  case JSON_DOUBLE_ARR:
+    return JSON_DOUBLE;
+  case JSON_LONG_ARR:
+    return JSON_LONG;
+  }
+}
+
+StatusJSON JSONToPrimitive(StringJSON json, PrimitiveJSON type, void *dest) {
+  char temp[BUFSIZ];
+  StatusJSON status;
+
+  switch (type) {
+  case JSON_DOUBLE:
+    if ((status = JSONToStr(json, temp) != FUNC_SUCCESS)) {
+      return status;
+    }
+
+    *(double *)dest = strtod(temp, nullptr);
+    break;
+
+  case JSON_LONG:
+    if ((status = JSONToStr(json, temp) != FUNC_SUCCESS)) {
+      return status;
+    }
+
+    *(long *)dest = strtol(temp, nullptr, 10);
+    break;
+
+  case JSON_INT:
+    if ((status = JSONToStr(json, temp) != FUNC_SUCCESS)) {
+      return status;
+    }
+
+    *(int *)dest = atoi(temp);
+    break;
+
+  case JSON_BOOLEAN:
+    if ((status = JSONToStr(json, temp) != FUNC_SUCCESS)) {
+      return status;
+    }
+
+    *(bool *)dest = strcmp(temp, "true") == 0 ? true : false;
+    break;
+
+  case JSON_DOUBLE_ARR:
+  case JSON_LONG_ARR:
+  case JSON_INT_ARR:
+    DynamicArrayJSON *arr = (DynamicArrayJSON *)dest;
+    bool isReading = false;
+    ssize_t iStartNum = -1, iEndNum = -1;
+    size_t iArr = 0;
+    for (size_t i = 0; i < json.length; i++) {
+      if (isdigit(json.str[i]) && !isReading) {
+        isReading = true;
+        iStartNum = i;
+      }
+
+      if (json.str[i] == PERIOD || !isReading) {
+        continue;
+      }
+
+      if (i >= json.length - 1) {
+        iEndNum = i - 1;
+        goto endIndex;
+      }
+
+      if (!isdigit(json.str[i])) {
+        iEndNum = i;
+        goto endIndex;
+      }
+
+      continue;
+
+    endIndex:
+      StringJSON result;
+      if ((status = GetWordBetweenIndexes(json, iStartNum, iEndNum, &result,
+                                          false) != FUNC_SUCCESS)) {
+        return status;
+      }
+
+      PrimitiveJSON baseType = GetUnderlyingType(type);
+      if (baseType == JSON_INT &&
+          (status =
+               JSONToPrimitive(result, baseType, &arr->arr.intArr[iArr++]) !=
+               FUNC_SUCCESS)) {
+        return status;
+      } else if (baseType == JSON_DOUBLE &&
+                 (status = JSONToPrimitive(result, baseType,
+                                           &arr->arr.doubleArr[iArr++]) !=
+                           FUNC_SUCCESS)) {
+        return status;
+      } else if (baseType == JSON_LONG &&
+                 (status = JSONToPrimitive(result, baseType,
+                                           &arr->arr.longArr[iArr++]) !=
+                           FUNC_SUCCESS)) {
+        return status;
+      }
+
+      arr->length = iArr;
+      iStartNum = -1;
+      iEndNum = -1;
+      isReading = false;
+    }
+    break;
+
+  case JSON_CHAR_ARR:
+    if ((status = JSONToStr(json, dest) != FUNC_SUCCESS)) {
+      return status;
+    }
+    break;
+  }
+
+  return FUNC_SUCCESS;
+}
+
 void GetStatusErrorMessage(StatusJSON status, char *dest) {
   switch (status) {
   default:
   case FUNC_SUCCESS:
     snprintf(dest, BUFSIZ, "Function exited with success code %d", status);
     break;
+  case UNSUPPORTED_OPERATION:
   case MEMORY_FAILURE:
     snprintf(dest, BUFSIZ, "Function exited with failure code %d", status);
     break;

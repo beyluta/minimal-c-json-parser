@@ -5,7 +5,11 @@
 #include <stddef.h>
 
 constexpr unsigned short JSONBUFFSIZE = USHRT_MAX;
-typedef enum : short { MEMORY_FAILURE = -1, FUNC_SUCCESS = 0 } StatusJSON;
+typedef enum : short {
+  MEMORY_FAILURE = -1,
+  FUNC_SUCCESS = 0,
+  UNSUPPORTED_OPERATION = 1
+} StatusJSON;
 typedef enum : char {
   UNDEFINED = -1,
   NUMBER = 0,
@@ -15,6 +19,16 @@ typedef enum : char {
   BOOLEAN = 4,
   JNULL = 5
 } TypeJSON;
+typedef enum : char {
+  JSON_DOUBLE,
+  JSON_INT,
+  JSON_LONG,
+  JSON_CHAR_ARR,
+  JSON_DOUBLE_ARR,
+  JSON_LONG_ARR,
+  JSON_INT_ARR,
+  JSON_BOOLEAN
+} PrimitiveJSON;
 typedef enum : unsigned char {
   SQUARE_OPEN = '[',
   SQUARE_CLOSE = ']',
@@ -23,6 +37,7 @@ typedef enum : unsigned char {
   DOUBLE_QUOTES = '\"',
   COLON = ':',
   COMMA = ',',
+  PERIOD = '.',
   BACKSLASH = '\\',
   SPACE = ' ',
 } TokenJSON;
@@ -31,6 +46,17 @@ typedef struct {
   size_t length;
   char str[JSONBUFFSIZE];
 } StringJSON;
+
+typedef union {
+  double doubleArr[JSONBUFFSIZE];
+  long longArr[JSONBUFFSIZE];
+  int intArr[JSONBUFFSIZE];
+} UniqueDynamicArray;
+
+typedef struct {
+  UniqueDynamicArray arr;
+  int length;
+} DynamicArrayJSON;
 
 /**
  * @brief Converts a json string to a standard c-string
@@ -63,5 +89,13 @@ StatusJSON GetProperty(StringJSON src, StringJSON *dest, const char *target);
  * @param dest String to save the message to
  */
 void GetStatusErrorMessage(StatusJSON status, char *dest);
+
+/**
+ * @brief Converts a JSON Struct to a primitive value passed by pointer
+ * @param json JSON object containing the value to be converted
+ * @param type Type to be converted
+ * @param dest Destination void pointer to save the result to
+ */
+StatusJSON JSONToPrimitive(StringJSON json, PrimitiveJSON type, void *dest);
 
 #endif
