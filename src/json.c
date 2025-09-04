@@ -335,6 +335,11 @@ StatusJSON JSONToPrimitive(StringJSON json, PrimitiveJSON type, void *dest) {
   case JSON_LONG_ARR:
   case JSON_INT_ARR:
     DynamicArrayJSON *arr = (DynamicArrayJSON *)dest;
+    if (json.length < 3) {
+      arr->length = 0; // Empty array
+      break;
+    }
+
     bool isReading = false;
     ssize_t iStartNum = -1, iEndNum = -1;
     size_t iArr = 0;
