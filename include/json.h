@@ -45,6 +45,7 @@ typedef enum : unsigned char {
 typedef struct {
   size_t length;
   char str[JSONBUFFSIZE];
+  TypeJSON type;
 } StringJSON;
 
 typedef union {

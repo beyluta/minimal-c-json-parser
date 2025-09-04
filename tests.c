@@ -4,10 +4,10 @@
 #include <string.h>
 
 constexpr char CHECKMARK[] = "\xE2\x9C\x93\n";
-constexpr unsigned char COUNT_CASES = 7;
+constexpr unsigned char COUNT_CASES = 11;
 static unsigned char tests = 0;
 
-void tryAssert(char *case1, char *case2, const char *message) {
+static void tryAssert(char *case1, char *case2, const char *message) {
   assert(strcmp(case1, case2) == 0);
   char completeMessage[BUFSIZ];
   snprintf(completeMessage, BUFSIZ, "%s case passed %d/%d %s", message, ++tests,
@@ -15,22 +15,10 @@ void tryAssert(char *case1, char *case2, const char *message) {
   printf("%s", completeMessage);
 }
 
-int main() {
-  char cJsonStr[] = "{ \"progName\": \"library\","
-                    "\"version\": 1.0, \"tags\": "
-                    "[\"C\", \"C++\"], \"metadata\": { \"origin\": "
-                    "\"unknown\", \"device\": { \"pc\": \"Desktop\" } }, "
-                    "\"isCompliant\": false, \"lastUpdated\": null }";
-
-  StringJSON jsonStr;
-  StatusJSON status;
-  if ((status = StrToJSON(cJsonStr, &jsonStr) != FUNC_SUCCESS)) {
-    return status;
-  }
-
-  // Testing for Strings
+static StatusJSON Test_String(StringJSON json) {
   StringJSON result;
-  if ((status = GetProperty(jsonStr, &result, "progName") != FUNC_SUCCESS)) {
+  StatusJSON status;
+  if ((status = GetProperty(json, &result, "progName") != FUNC_SUCCESS)) {
     return status;
   }
 
@@ -41,55 +29,138 @@ int main() {
 
   tryAssert(cResult, "library", "String");
 
-  // Testing for Booleans
-  if ((status = GetProperty(jsonStr, &result, "isCompliant") != FUNC_SUCCESS)) {
+  return FUNC_SUCCESS;
+}
+
+static StatusJSON Test_Empty_String(StringJSON json) {
+  StringJSON result;
+  StatusJSON status;
+  if ((status = GetProperty(json, &result, "description") != FUNC_SUCCESS)) {
     return status;
   }
 
+  char cResult[512];
+  if ((status = JSONToStr(result, cResult) != FUNC_SUCCESS)) {
+    printf("Issue occurred!\n");
+    return status;
+  }
+
+  tryAssert(cResult, "", "Empty String");
+
+  return FUNC_SUCCESS;
+}
+
+static StatusJSON Test_Primitive_Empty_String(StringJSON json) {
+  StringJSON result;
+  StatusJSON status;
+  if ((status = GetProperty(json, &result, "description") != FUNC_SUCCESS)) {
+    return status;
+  }
+
+  char array[512];
+  if ((status =
+           JSONToPrimitive(result, JSON_CHAR_ARR, &array) != FUNC_SUCCESS)) {
+    return status;
+  }
+
+  tryAssert(array, "", "Primitive Empty String");
+
+  return FUNC_SUCCESS;
+}
+
+static StatusJSON Test_Boolean(StringJSON json) {
+  StringJSON result;
+  StatusJSON status;
+  if ((status = GetProperty(json, &result, "isCompliant") != FUNC_SUCCESS)) {
+    return status;
+  }
+
+  char cResult[512];
   if ((status = JSONToStr(result, cResult) != FUNC_SUCCESS)) {
     return status;
   }
 
   tryAssert(cResult, "false", "Boolean");
 
-  // Testing for Nulls
-  if ((status = GetProperty(jsonStr, &result, "lastUpdated") != FUNC_SUCCESS)) {
+  return FUNC_SUCCESS;
+}
+
+static StatusJSON Test_Null(StringJSON json) {
+  StringJSON result;
+  StatusJSON status;
+  if ((status = GetProperty(json, &result, "lastUpdated") != FUNC_SUCCESS)) {
     return status;
   }
 
+  char cResult[512];
   if ((status = JSONToStr(result, cResult) != FUNC_SUCCESS)) {
     return status;
   }
 
   tryAssert(cResult, "null", "Null");
+  return FUNC_SUCCESS;
+}
 
-  // Testing for Numbers
-  if ((status = GetProperty(jsonStr, &result, "version") != FUNC_SUCCESS)) {
+static StatusJSON Test_Number(StringJSON json) {
+  StringJSON result;
+  StatusJSON status;
+  if ((status = GetProperty(json, &result, "version") != FUNC_SUCCESS)) {
     return status;
   }
 
+  char cResult[512];
   if ((status = JSONToStr(result, cResult) != FUNC_SUCCESS)) {
     return status;
   }
 
   tryAssert(cResult, "1.0", "Number");
+  return FUNC_SUCCESS;
+}
 
-  // Testing for Arrays
-  if ((status = GetProperty(jsonStr, &result, "tags") != FUNC_SUCCESS)) {
+static StatusJSON Test_Array(StringJSON json) {
+  StringJSON result;
+  StatusJSON status;
+  if ((status = GetProperty(json, &result, "tags") != FUNC_SUCCESS)) {
     return status;
   }
 
+  char cResult[512];
   if ((status = JSONToStr(result, cResult) != FUNC_SUCCESS)) {
     return status;
   }
 
   tryAssert(cResult, "[\"C\", \"C++\"]", "Array");
 
-  // Testing for an Object
-  if ((status = GetProperty(jsonStr, &result, "metadata") != FUNC_SUCCESS)) {
+  return FUNC_SUCCESS;
+}
+
+static StatusJSON Test_Empty_Array(StringJSON json) {
+  StringJSON result;
+  StatusJSON status;
+  if ((status = GetProperty(json, &result, "devs") != FUNC_SUCCESS)) {
     return status;
   }
 
+  char cResult[512];
+  if ((status = JSONToStr(result, cResult) != FUNC_SUCCESS)) {
+    return status;
+  }
+
+  // printf("Result is: %s\n", cResult);
+
+  tryAssert(cResult, "[]", "Empty Array");
+
+  return FUNC_SUCCESS;
+}
+
+static StatusJSON Test_Object(StringJSON json) {
+  StringJSON result;
+  StatusJSON status;
+  if ((status = GetProperty(json, &result, "metadata") != FUNC_SUCCESS)) {
+    return status;
+  }
+
+  char cResult[512];
   if ((status = JSONToStr(result, cResult) != FUNC_SUCCESS)) {
     return status;
   }
@@ -98,16 +169,68 @@ int main() {
             "{ \"origin\": \"unknown\", \"device\": { \"pc\": \"Desktop\" } }",
             "Object");
 
-  // Testing the access of nested objects
-  if ((status = GetProperty(result, &result, "device") != FUNC_SUCCESS)) {
+  return FUNC_SUCCESS;
+}
+
+static StatusJSON Test_Empty_Object(StringJSON json) {
+  StringJSON result;
+  StatusJSON status;
+  if ((status = GetProperty(json, &result, "other") != FUNC_SUCCESS)) {
     return status;
   }
 
+  char cResult[512];
+  if ((status = JSONToStr(result, cResult) != FUNC_SUCCESS)) {
+    return status;
+  }
+
+  tryAssert(cResult, "{}", "Empty Object");
+
+  return FUNC_SUCCESS;
+}
+
+static StatusJSON Test_Nested_Object(StringJSON json) {
+  StringJSON result;
+  StatusJSON status;
+  if ((status = GetProperty(json, &result, "device") != FUNC_SUCCESS)) {
+    return status;
+  }
+
+  char cResult[512];
   if ((status = JSONToStr(result, cResult) != FUNC_SUCCESS)) {
     return status;
   }
 
   tryAssert(cResult, "{ \"pc\": \"Desktop\" }", "Object nested");
+
+  return FUNC_SUCCESS;
+}
+
+int main() {
+  char cJsonStr[] = "{ \"progName\": \"library\", \"description\": \"\","
+                    "\"version\": 1.0, \"tags\": "
+                    "[\"C\", \"C++\"], \"metadata\": { \"origin\": "
+                    "\"unknown\", \"device\": { \"pc\": \"Desktop\" } }, "
+                    "\"isCompliant\": false, \"lastUpdated\": null, \"devs\": "
+                    "[], \"other\": {} }";
+
+  StringJSON jsonStr;
+  StatusJSON status;
+  if ((status = StrToJSON(cJsonStr, &jsonStr) != FUNC_SUCCESS)) {
+    return status;
+  }
+
+  Test_String(jsonStr);
+  Test_Empty_String(jsonStr);
+  Test_Primitive_Empty_String(jsonStr);
+  Test_Boolean(jsonStr);
+  Test_Null(jsonStr);
+  Test_Number(jsonStr);
+  Test_Array(jsonStr);
+  Test_Empty_Array(jsonStr);
+  Test_Object(jsonStr);
+  Test_Empty_Object(jsonStr);
+  Test_Nested_Object(jsonStr);
 
   return 0;
 }

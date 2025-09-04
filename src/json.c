@@ -32,6 +32,12 @@ static StatusJSON GetWordBetweenIndexes(const StringJSON src,
 }
 
 StatusJSON JSONToStr(StringJSON src, char *dest) {
+  // Passing an empty string if propety is empty
+  if (src.length == 2 && src.type == STRING) {
+    memcpy(dest, "", 1);
+    return FUNC_SUCCESS;
+  }
+
   if (src.length >= JSONBUFFSIZE)
     return MEMORY_FAILURE;
 
@@ -109,6 +115,7 @@ static StatusJSON GetValue(StringJSON src, const ssize_t iStartAt,
     // Make sure to assign a type to the current json being read
     if (type == UNDEFINED) {
       type = GetJSONType(src.str[i]);
+      dest->type = type;
       iStartWord = i;
 
       if (type == OBJECT || type == ARRAY) {
@@ -182,6 +189,7 @@ static StatusJSON GetValue(StringJSON src, const ssize_t iStartAt,
         fieldNestingLevel--;
         if (fieldNestingLevel == 0) {
           iEndWord = i;
+          break;
         }
       }
     }
@@ -204,6 +212,7 @@ static StatusJSON GetValue(StringJSON src, const ssize_t iStartAt,
         fieldNestingLevel--;
         if (fieldNestingLevel == 0) {
           iEndWord = i;
+          break;
         }
       }
     }
