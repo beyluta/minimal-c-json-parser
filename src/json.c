@@ -24,7 +24,7 @@ static status_json_t GetWordBetweenIndexes(const string_json_t src,
   dest->length = length;
 
   status_json_t status;
-  if (trimEnds && (status = TrimEnds(dest) != FUNC_SUCCESS)) {
+  if (trimEnds && (status = TrimEnds(dest)) != FUNC_SUCCESS) {
     return status;
   }
 
@@ -220,7 +220,7 @@ static status_json_t GetValue(string_json_t src, const ssize_t iStartAt,
 
   status_json_t status;
   if ((status = GetWordBetweenIndexes(src, iStartWord, iEndWord, dest,
-                                      type == STRING) != FUNC_SUCCESS)) {
+                                      type == STRING)) != FUNC_SUCCESS) {
     return status;
   }
 
@@ -234,7 +234,7 @@ status_json_t GetJsonProperty3(string_json_t src, string_json_t *dest,
   }
 
   status_json_t status;
-  if ((status = TrimEnds(&src) != FUNC_SUCCESS)) {
+  if ((status = TrimEnds(&src)) != FUNC_SUCCESS) {
     return status;
   }
 
@@ -261,12 +261,12 @@ status_json_t GetJsonProperty3(string_json_t src, string_json_t *dest,
         string_json_t value;
         status_json_t status;
         if ((status = GetWordBetweenIndexes(src, iStartWord, iEndWord, &value,
-                                            true) != FUNC_SUCCESS)) {
+                                            true)) != FUNC_SUCCESS) {
           return MEMORY_FAILURE;
         }
 
         char cStr[JSONBUFFSIZE];
-        if ((status = ConvertJsonToString(value, cStr) != FUNC_SUCCESS)) {
+        if ((status = ConvertJsonToString(value, cStr)) != FUNC_SUCCESS) {
           return MEMORY_FAILURE;
         }
 
@@ -306,7 +306,7 @@ status_json_t ConvertJsonToStandardType(string_json_t json,
 
   switch (type) {
   case JSON_DOUBLE:
-    if ((status = ConvertJsonToString(json, temp) != FUNC_SUCCESS)) {
+    if ((status = ConvertJsonToString(json, temp)) != FUNC_SUCCESS) {
       return status;
     }
 
@@ -314,7 +314,7 @@ status_json_t ConvertJsonToStandardType(string_json_t json,
     break;
 
   case JSON_LONG:
-    if ((status = ConvertJsonToString(json, temp) != FUNC_SUCCESS)) {
+    if ((status = ConvertJsonToString(json, temp)) != FUNC_SUCCESS) {
       return status;
     }
 
@@ -322,7 +322,7 @@ status_json_t ConvertJsonToStandardType(string_json_t json,
     break;
 
   case JSON_INT:
-    if ((status = ConvertJsonToString(json, temp) != FUNC_SUCCESS)) {
+    if ((status = ConvertJsonToString(json, temp)) != FUNC_SUCCESS) {
       return status;
     }
 
@@ -330,7 +330,7 @@ status_json_t ConvertJsonToStandardType(string_json_t json,
     break;
 
   case JSON_BOOLEAN:
-    if ((status = ConvertJsonToString(json, temp) != FUNC_SUCCESS)) {
+    if ((status = ConvertJsonToString(json, temp)) != FUNC_SUCCESS) {
       return status;
     }
 
@@ -374,25 +374,24 @@ status_json_t ConvertJsonToStandardType(string_json_t json,
     endIndex:
       string_json_t result;
       if ((status = GetWordBetweenIndexes(json, iStartNum, iEndNum, &result,
-                                          false) != FUNC_SUCCESS)) {
+                                          false)) != FUNC_SUCCESS) {
         return status;
       }
 
       native_json_type_t baseType = GetUnderlyingType(type);
       if (baseType == JSON_INT &&
-          (status = ConvertJsonToStandardType(result, baseType,
-                                              &arr->data.i[iArr++]) !=
-                    FUNC_SUCCESS)) {
+          (status = ConvertJsonToStandardType(
+               result, baseType, &arr->data.i[iArr++])) != FUNC_SUCCESS) {
         return status;
       } else if (baseType == JSON_DOUBLE &&
                  (status = ConvertJsonToStandardType(result, baseType,
-                                                     &arr->data.d[iArr++]) !=
-                           FUNC_SUCCESS)) {
+                                                     &arr->data.d[iArr++])) !=
+                     FUNC_SUCCESS) {
         return status;
       } else if (baseType == JSON_LONG &&
                  (status = ConvertJsonToStandardType(result, baseType,
-                                                     &arr->data.d[iArr++]) !=
-                           FUNC_SUCCESS)) {
+                                                     &arr->data.d[iArr++])) !=
+                     FUNC_SUCCESS) {
         return status;
       }
 
@@ -404,7 +403,7 @@ status_json_t ConvertJsonToStandardType(string_json_t json,
     break;
 
   case JSON_CHAR_ARR:
-    if ((status = ConvertJsonToString(json, dest) != FUNC_SUCCESS)) {
+    if ((status = ConvertJsonToString(json, dest)) != FUNC_SUCCESS) {
       return status;
     }
     break;
