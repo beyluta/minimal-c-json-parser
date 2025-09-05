@@ -43,13 +43,14 @@ We want to extract the `progName` field into a readable C-Style-String (aka char
 ```c
   char *jsonFileContent = ReadFile(...); // Load the json file here as a string
 
-  StringJSON json;
-  StrToJSON(jsonFileContent, &json);
+  string_json_t json;
+  ConvertStringToJson(jsonFileContent, &json);
 
-  GetProperty(json, &json, "progName");
+  GetProperty(&json, "progName");
+  // Or GetProperty(src, dest, "progName")
 
   char progName[512];
-  JSONToStr(json, progName);
+  ConvertJsonToString(json, progName);
   printf("%s\n", progName); // Expected result: "library"
 ```
 
@@ -71,10 +72,10 @@ Currently the following types can be converted to native C types from a `StringJ
 To convert them you must use the function `JSONToPrimitive(StringJSON, PrimitiveJSON, void*)` as such:
 
 ```c
-StringJSON json; // = 99.95
+string_json_t json; // = 99.95
 
 double num; // double, int, long, or char[] supported
-JSONToPrimitive(json, JSON_DOUBLE, &num);
+ConvertJsonToStandardType(json, JSON_DOUBLE, &num);
 // Or                 JSON_INT
 // Or                 JSON_LONG
 // Or                 JSON_BOOLEAN
@@ -86,13 +87,15 @@ printf("Result is %f\n", num);
 And for various types of number arrays:
 
 ```c
-StringJSON json; // = [ 10.5, 20, 30.0 ]
+json_string_t json; // = [ 10.5, 20, 30.0 ]
 
-DynamicArrayJSON list;
-JSONToPrimitive(json, JSON_DOUBLE_ARR, &list);
+array_json_t list;
+ConvertJsonToStandardType(json, JSON_DOUBLE_ARR, &list);
 
 for (int i = 0; i < list.length; i++) {
-  printf("Result is: %f\n", list.arr.doubleArray[i]);
+  printf("Result is: %f\n", list.data.d[i]);
+  // Or                              .i for int
+  // Or                              .l for long
 }
 ```
 

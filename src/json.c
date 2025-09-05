@@ -5,7 +5,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-static StatusJSON TrimEnds(StringJSON *src) {
+static status_json_t TrimEnds(string_json_t *src) {
   if (src->length <= 2)
     return MEMORY_FAILURE;
   memcpy(src->str, &src->str[1], src->length - 2);
@@ -13,9 +13,9 @@ static StatusJSON TrimEnds(StringJSON *src) {
   return FUNC_SUCCESS;
 }
 
-static StatusJSON GetWordBetweenIndexes(const StringJSON src,
-                                        const size_t start, const size_t end,
-                                        StringJSON *dest, bool trimEnds) {
+static status_json_t GetWordBetweenIndexes(const string_json_t src,
+                                           const size_t start, const size_t end,
+                                           string_json_t *dest, bool trimEnds) {
   const ssize_t length = end - start + 1;
   if (length < 1)
     return MEMORY_FAILURE;
@@ -23,7 +23,7 @@ static StatusJSON GetWordBetweenIndexes(const StringJSON src,
   memcpy(dest->str, &src.str[start], length);
   dest->length = length;
 
-  StatusJSON status;
+  status_json_t status;
   if (trimEnds && (status = TrimEnds(dest) != FUNC_SUCCESS)) {
     return status;
   }
@@ -31,7 +31,7 @@ static StatusJSON GetWordBetweenIndexes(const StringJSON src,
   return FUNC_SUCCESS;
 }
 
-StatusJSON JSONToStr(StringJSON src, char *dest) {
+status_json_t ConvertJsonToString(string_json_t src, char *dest) {
   // Passing an empty string if propety is empty
   if (src.length == 2 && src.type == STRING) {
     memcpy(dest, "", 1);
@@ -46,7 +46,7 @@ StatusJSON JSONToStr(StringJSON src, char *dest) {
   return FUNC_SUCCESS;
 }
 
-StatusJSON StrToJSON(const char *src, StringJSON *dest) {
+status_json_t ConvertStringToJson(const char *src, string_json_t *dest) {
   const size_t size = strlen(src);
   if (size >= JSONBUFFSIZE)
     return MEMORY_FAILURE;
@@ -57,7 +57,7 @@ StatusJSON StrToJSON(const char *src, StringJSON *dest) {
   return FUNC_SUCCESS;
 }
 
-static TypeJSON GetJSONType(const char c) {
+static type_json_t GetJSONType(const char c) {
   switch ((int)c) {
   default:
     return NUMBER;
@@ -75,7 +75,7 @@ static TypeJSON GetJSONType(const char c) {
   }
 }
 
-static bool TypeRequiresDelimiter(TypeJSON type) {
+static bool TypeRequiresDelimiter(type_json_t type) {
   switch (type) {
   case NUMBER:
   case BOOLEAN:
@@ -86,8 +86,8 @@ static bool TypeRequiresDelimiter(TypeJSON type) {
   }
 }
 
-static StatusJSON GetValue(StringJSON src, const ssize_t iStartAt,
-                           StringJSON *dest) {
+static status_json_t GetValue(string_json_t src, const ssize_t iStartAt,
+                              string_json_t *dest) {
   if (iStartAt < 0 || src.length == 0)
     return MEMORY_FAILURE;
 
@@ -95,7 +95,7 @@ static StatusJSON GetValue(StringJSON src, const ssize_t iStartAt,
   size_t fieldNestingLevel = 0;
   bool isCurrentWordValue = false;
   bool isCurrentIndexInsideDoubleQuotes = false;
-  TypeJSON type = UNDEFINED;
+  type_json_t type = UNDEFINED;
   for (size_t i = iStartAt + 1; i < src.length; i++) {
     // Ignoring spaces unless the type requires delimiters
     if (src.str[i] == SPACE && TypeRequiresDelimiter(type))
@@ -218,7 +218,7 @@ static StatusJSON GetValue(StringJSON src, const ssize_t iStartAt,
     }
   }
 
-  StatusJSON status;
+  status_json_t status;
   if ((status = GetWordBetweenIndexes(src, iStartWord, iEndWord, dest,
                                       type == STRING) != FUNC_SUCCESS)) {
     return status;
@@ -227,12 +227,13 @@ static StatusJSON GetValue(StringJSON src, const ssize_t iStartAt,
   return FUNC_SUCCESS;
 }
 
-StatusJSON GetProperty(StringJSON src, StringJSON *dest, const char *target) {
+status_json_t GetJsonProperty3(string_json_t src, string_json_t *dest,
+                               const char *target) {
   if (src.length <= 0 || strlen(target) >= JSONBUFFSIZE) {
     return MEMORY_FAILURE;
   }
 
-  StatusJSON status;
+  status_json_t status;
   if ((status = TrimEnds(&src) != FUNC_SUCCESS)) {
     return status;
   }
@@ -257,15 +258,15 @@ StatusJSON GetProperty(StringJSON src, StringJSON *dest, const char *target) {
       } else if (iEndWord < 0) {
         iEndWord = i;
 
-        StringJSON value;
-        StatusJSON status;
+        string_json_t value;
+        status_json_t status;
         if ((status = GetWordBetweenIndexes(src, iStartWord, iEndWord, &value,
                                             true) != FUNC_SUCCESS)) {
           return MEMORY_FAILURE;
         }
 
         char cStr[JSONBUFFSIZE];
-        if ((status = JSONToStr(value, cStr) != FUNC_SUCCESS)) {
+        if ((status = ConvertJsonToString(value, cStr) != FUNC_SUCCESS)) {
           return MEMORY_FAILURE;
         }
 
@@ -282,7 +283,11 @@ StatusJSON GetProperty(StringJSON src, StringJSON *dest, const char *target) {
   return FUNC_SUCCESS;
 }
 
-static PrimitiveJSON GetUnderlyingType(PrimitiveJSON type) {
+status_json_t GetJsonProperty2(string_json_t *srcDest, const char *target) {
+  return GetJsonProperty3(*srcDest, srcDest, target);
+}
+
+static native_json_type_t GetUnderlyingType(native_json_type_t type) {
   switch (type) {
   default:
   case JSON_INT_ARR:
@@ -294,13 +299,14 @@ static PrimitiveJSON GetUnderlyingType(PrimitiveJSON type) {
   }
 }
 
-StatusJSON JSONToPrimitive(StringJSON json, PrimitiveJSON type, void *dest) {
+status_json_t ConvertJsonToStandardType(string_json_t json,
+                                        native_json_type_t type, void *dest) {
   char temp[BUFSIZ];
-  StatusJSON status;
+  status_json_t status;
 
   switch (type) {
   case JSON_DOUBLE:
-    if ((status = JSONToStr(json, temp) != FUNC_SUCCESS)) {
+    if ((status = ConvertJsonToString(json, temp) != FUNC_SUCCESS)) {
       return status;
     }
 
@@ -308,7 +314,7 @@ StatusJSON JSONToPrimitive(StringJSON json, PrimitiveJSON type, void *dest) {
     break;
 
   case JSON_LONG:
-    if ((status = JSONToStr(json, temp) != FUNC_SUCCESS)) {
+    if ((status = ConvertJsonToString(json, temp) != FUNC_SUCCESS)) {
       return status;
     }
 
@@ -316,7 +322,7 @@ StatusJSON JSONToPrimitive(StringJSON json, PrimitiveJSON type, void *dest) {
     break;
 
   case JSON_INT:
-    if ((status = JSONToStr(json, temp) != FUNC_SUCCESS)) {
+    if ((status = ConvertJsonToString(json, temp) != FUNC_SUCCESS)) {
       return status;
     }
 
@@ -324,7 +330,7 @@ StatusJSON JSONToPrimitive(StringJSON json, PrimitiveJSON type, void *dest) {
     break;
 
   case JSON_BOOLEAN:
-    if ((status = JSONToStr(json, temp) != FUNC_SUCCESS)) {
+    if ((status = ConvertJsonToString(json, temp) != FUNC_SUCCESS)) {
       return status;
     }
 
@@ -334,7 +340,7 @@ StatusJSON JSONToPrimitive(StringJSON json, PrimitiveJSON type, void *dest) {
   case JSON_DOUBLE_ARR:
   case JSON_LONG_ARR:
   case JSON_INT_ARR:
-    DynamicArrayJSON *arr = (DynamicArrayJSON *)dest;
+    array_json_t *arr = (array_json_t *)dest;
     if (json.length < 3) {
       arr->length = 0; // Empty array
       break;
@@ -366,26 +372,26 @@ StatusJSON JSONToPrimitive(StringJSON json, PrimitiveJSON type, void *dest) {
       continue;
 
     endIndex:
-      StringJSON result;
+      string_json_t result;
       if ((status = GetWordBetweenIndexes(json, iStartNum, iEndNum, &result,
                                           false) != FUNC_SUCCESS)) {
         return status;
       }
 
-      PrimitiveJSON baseType = GetUnderlyingType(type);
+      native_json_type_t baseType = GetUnderlyingType(type);
       if (baseType == JSON_INT &&
-          (status =
-               JSONToPrimitive(result, baseType, &arr->arr.intArr[iArr++]) !=
-               FUNC_SUCCESS)) {
+          (status = ConvertJsonToStandardType(result, baseType,
+                                              &arr->data.i[iArr++]) !=
+                    FUNC_SUCCESS)) {
         return status;
       } else if (baseType == JSON_DOUBLE &&
-                 (status = JSONToPrimitive(result, baseType,
-                                           &arr->arr.doubleArr[iArr++]) !=
+                 (status = ConvertJsonToStandardType(result, baseType,
+                                                     &arr->data.d[iArr++]) !=
                            FUNC_SUCCESS)) {
         return status;
       } else if (baseType == JSON_LONG &&
-                 (status = JSONToPrimitive(result, baseType,
-                                           &arr->arr.longArr[iArr++]) !=
+                 (status = ConvertJsonToStandardType(result, baseType,
+                                                     &arr->data.d[iArr++]) !=
                            FUNC_SUCCESS)) {
         return status;
       }
@@ -398,7 +404,7 @@ StatusJSON JSONToPrimitive(StringJSON json, PrimitiveJSON type, void *dest) {
     break;
 
   case JSON_CHAR_ARR:
-    if ((status = JSONToStr(json, dest) != FUNC_SUCCESS)) {
+    if ((status = ConvertJsonToString(json, dest) != FUNC_SUCCESS)) {
       return status;
     }
     break;
@@ -407,7 +413,7 @@ StatusJSON JSONToPrimitive(StringJSON json, PrimitiveJSON type, void *dest) {
   return FUNC_SUCCESS;
 }
 
-void GetStatusErrorMessage(StatusJSON status, char *dest) {
+void GetStatusErrorMessage(status_json_t status, char *dest) {
   switch (status) {
   default:
   case FUNC_SUCCESS:

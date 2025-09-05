@@ -4,12 +4,19 @@
 #include <limits.h>
 #include <stddef.h>
 
+#define GETPROP2(a, b) GetJsonProperty2(a, b)
+#define GETPROP3(a, b, c) GetJsonProperty3(a, b, c)
+#define EXPAND(a) a
+#define GET_PROP_MACRO(_1, _2, _3, name, ...) name
+#define GetProperty(...)                                                       \
+  EXPAND(GET_PROP_MACRO(__VA_ARGS__, GETPROP3, GETPROP2)(__VA_ARGS__))
+
 constexpr unsigned short JSONBUFFSIZE = USHRT_MAX;
 typedef enum : short {
   MEMORY_FAILURE = -1,
   FUNC_SUCCESS = 0,
   UNSUPPORTED_OPERATION = 1
-} StatusJSON;
+} status_json_t;
 typedef enum : char {
   UNDEFINED = -1,
   NUMBER = 0,
@@ -18,7 +25,7 @@ typedef enum : char {
   ARRAY = 3,
   BOOLEAN = 4,
   JNULL = 5
-} TypeJSON;
+} type_json_t;
 typedef enum : char {
   JSON_DOUBLE,
   JSON_INT,
@@ -28,7 +35,7 @@ typedef enum : char {
   JSON_LONG_ARR,
   JSON_INT_ARR,
   JSON_BOOLEAN
-} PrimitiveJSON;
+} native_json_type_t;
 typedef enum : unsigned char {
   SQUARE_OPEN = '[',
   SQUARE_CLOSE = ']',
@@ -40,24 +47,24 @@ typedef enum : unsigned char {
   PERIOD = '.',
   BACKSLASH = '\\',
   SPACE = ' ',
-} TokenJSON;
+} token_json_t;
 
 typedef struct {
   size_t length;
   char str[JSONBUFFSIZE];
-  TypeJSON type;
-} StringJSON;
+  type_json_t type;
+} string_json_t;
 
 typedef union {
-  double doubleArr[JSONBUFFSIZE];
-  long longArr[JSONBUFFSIZE];
-  int intArr[JSONBUFFSIZE];
-} UniqueDynamicArray;
+  double d[JSONBUFFSIZE];
+  long l[JSONBUFFSIZE];
+  int i[JSONBUFFSIZE];
+} array_data_t;
 
 typedef struct {
-  UniqueDynamicArray arr;
+  array_data_t data;
   int length;
-} DynamicArrayJSON;
+} array_json_t;
 
 /**
  * @brief Converts a json string to a standard c-string
@@ -65,7 +72,7 @@ typedef struct {
  * @param dest destination array of chars to store the result
  * @returns the status of the operation
  */
-StatusJSON JSONToStr(StringJSON src, char *dest);
+status_json_t ConvertJsonToString(string_json_t src, char *dest);
 
 /**
  * @brief Converts a c-string to a JSON String
@@ -73,7 +80,7 @@ StatusJSON JSONToStr(StringJSON src, char *dest);
  * @param dest destination array of chars to store the result
  * @returns the status of the operation
  */
-StatusJSON StrToJSON(const char *src, StringJSON *dest);
+status_json_t ConvertStringToJson(const char *src, string_json_t *dest);
 
 /**
  * @brief Gets a property from a JSON object by the field name
@@ -82,14 +89,24 @@ StatusJSON StrToJSON(const char *src, StringJSON *dest);
  * @param target Name of the field we want to get the value of
  * @returns The status of the operation
  */
-StatusJSON GetProperty(StringJSON src, StringJSON *dest, const char *target);
+status_json_t GetJsonProperty3(string_json_t src, string_json_t *dest,
+                               const char *target);
+
+/**
+ * @brief Gets a property from a JSON object by the field name
+ * @param srcDest JSON object containing the key-value we want to get; The
+ * result of the query will be saved inside the same object
+ * @param target Name of the field we want to get the value of
+ * @returns The status of the operation
+ */
+status_json_t GetJsonProperty2(string_json_t *srcDest, const char *target);
 
 /**
  * @brief Gets a description of the error message thrown
  * @param status Status of the message to get the description from
  * @param dest String to save the message to
  */
-void GetStatusErrorMessage(StatusJSON status, char *dest);
+void GetStatusErrorMessage(status_json_t status, char *dest);
 
 /**
  * @brief Converts a JSON Struct to a primitive value passed by pointer
@@ -97,6 +114,7 @@ void GetStatusErrorMessage(StatusJSON status, char *dest);
  * @param type Type to be converted
  * @param dest Destination void pointer to save the result to
  */
-StatusJSON JSONToPrimitive(StringJSON json, PrimitiveJSON type, void *dest);
+status_json_t ConvertJsonToStandardType(string_json_t json,
+                                        native_json_type_t type, void *dest);
 
 #endif
