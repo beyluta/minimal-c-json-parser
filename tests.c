@@ -2,6 +2,7 @@
 #include <json.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 constexpr char CHECKMARK[] = "\xE2\x9C\x93\n";
 constexpr unsigned char COUNT_CASES = 11;
@@ -217,6 +218,8 @@ int main() {
     return status;
   }
 
+  float startTime = (float)clock() / CLOCKS_PER_SEC;
+
   Test_String(jsonStr);
   Test_Empty_String(jsonStr);
   Test_Primitive_Empty_String(jsonStr);
@@ -229,5 +232,8 @@ int main() {
   Test_Empty_Object(jsonStr);
   Test_Nested_Object(jsonStr);
 
+  float endTime = (float)clock() / CLOCKS_PER_SEC;
+  float elapsed = endTime - startTime;
+  printf("All cases passed with a time of %f\n", elapsed);
   return 0;
 }
