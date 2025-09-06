@@ -33,7 +33,7 @@ static status_json_t GetWordBetweenIndexes(const string_json_t src,
 
 status_json_t ConvertJsonToString(string_json_t src, char *dest) {
   // Passing an empty string if propety is empty
-  if (src.length == 2 && src.type == STRING) {
+  if (src.length == 2 && src.type == JSTRING) {
     memcpy(dest, "", 1);
     return FUNC_SUCCESS;
   }
@@ -60,25 +60,25 @@ status_json_t ConvertStringToJson(const char *src, string_json_t *dest) {
 static type_json_t GetJSONType(const char c) {
   switch ((int)c) {
   default:
-    return NUMBER;
+    return JNUMBER;
   case DOUBLE_QUOTES:
-    return STRING;
+    return JSTRING;
   case SQUARE_OPEN:
-    return ARRAY;
+    return JARRAY;
   case CURLY_OPEN:
-    return OBJECT;
+    return JOBJECT;
   case 'n':
     return JNULL;
   case 'f':
   case 't':
-    return BOOLEAN;
+    return JBOOLEAN;
   }
 }
 
 static bool TypeRequiresDelimiter(type_json_t type) {
   switch (type) {
-  case NUMBER:
-  case BOOLEAN:
+  case JNUMBER:
+  case JBOOLEAN:
   case JNULL:
     return false;
   default:
@@ -95,7 +95,7 @@ static status_json_t GetValue(string_json_t src, const ssize_t iStartAt,
   size_t fieldNestingLevel = 0;
   bool isCurrentWordValue = false;
   bool isCurrentIndexInsideDoubleQuotes = false;
-  type_json_t type = UNDEFINED;
+  type_json_t type = JUNDEFINED;
   for (size_t i = iStartAt + 1; i < src.length; i++) {
     // Ignoring spaces unless the type requires delimiters
     if (src.str[i] == SPACE && TypeRequiresDelimiter(type))
@@ -113,16 +113,16 @@ static status_json_t GetValue(string_json_t src, const ssize_t iStartAt,
     }
 
     // Make sure to assign a type to the current json being read
-    if (type == UNDEFINED) {
+    if (type == JUNDEFINED) {
       type = GetJSONType(src.str[i]);
       dest->type = type;
       iStartWord = i;
 
-      if (type == OBJECT || type == ARRAY) {
+      if (type == JOBJECT || type == JARRAY) {
         fieldNestingLevel++;
       }
 
-      if (type != NUMBER) {
+      if (type != JNUMBER) {
         continue;
       }
     }
@@ -130,14 +130,14 @@ static status_json_t GetValue(string_json_t src, const ssize_t iStartAt,
     // Strings are the most basic type to parse because we just need to return
     // the indexes of the start and end of the double quotes
     if (src.str[i] == DOUBLE_QUOTES && src.str[i - 1] != BACKSLASH &&
-        type == STRING) {
+        type == JSTRING) {
       iEndWord = i;
       break;
     }
 
     // Booleans and nulls are basically the same. We just need to read until the
     // end of the stream and return whatever has been read
-    if (type == BOOLEAN || type == JNULL) {
+    if (type == JBOOLEAN || type == JNULL) {
       if (src.str[i] == SPACE || src.str[i] == COMMA) {
         iEndWord = i - 1;
         break;
@@ -152,7 +152,7 @@ static status_json_t GetValue(string_json_t src, const ssize_t iStartAt,
     // Numbers are a little trickier, we need to make sure to return the number
     // as soon as there aren't any digits left in the current readable stream.
     // This excludes some annoyances like the period to declare decimal values
-    if (type == NUMBER) {
+    if (type == JNUMBER) {
       if (src.str[i] == PERIOD) {
         continue;
       }
@@ -172,7 +172,7 @@ static status_json_t GetValue(string_json_t src, const ssize_t iStartAt,
     // to make sure to disregard any values inside double quotes since these are
     // just user strings. As well as keep track of the amount of square brackets
     // for nested arrays
-    if (type == ARRAY) {
+    if (type == JARRAY) {
       if (src.str[i] == DOUBLE_QUOTES && i - 1 > 0 &&
           src.str[i - 1] != BACKSLASH) {
         isCurrentIndexInsideDoubleQuotes = !isCurrentIndexInsideDoubleQuotes;
@@ -196,7 +196,7 @@ static status_json_t GetValue(string_json_t src, const ssize_t iStartAt,
 
     // Objects are basically the same as arrays but to make the code more
     // readable I separated them, but they just do the same thing essentially
-    if (type == OBJECT) {
+    if (type == JOBJECT) {
       if (src.str[i] == DOUBLE_QUOTES && i - 1 > 0 &&
           src.str[i - 1] != BACKSLASH) {
         isCurrentIndexInsideDoubleQuotes = !isCurrentIndexInsideDoubleQuotes;
@@ -220,7 +220,7 @@ static status_json_t GetValue(string_json_t src, const ssize_t iStartAt,
 
   status_json_t status;
   if ((status = GetWordBetweenIndexes(src, iStartWord, iEndWord, dest,
-                                      type == STRING)) != FUNC_SUCCESS) {
+                                      type == JSTRING)) != FUNC_SUCCESS) {
     return status;
   }
 

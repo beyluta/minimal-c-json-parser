@@ -18,12 +18,12 @@ typedef enum : short {
   UNSUPPORTED_OPERATION = 1
 } status_json_t;
 typedef enum : char {
-  UNDEFINED = -1,
-  NUMBER = 0,
-  OBJECT = 1,
-  STRING = 2,
-  ARRAY = 3,
-  BOOLEAN = 4,
+  JUNDEFINED = -1,
+  JNUMBER = 0,
+  JOBJECT = 1,
+  JSTRING = 2,
+  JARRAY = 3,
+  JBOOLEAN = 4,
   JNULL = 5
 } type_json_t;
 typedef enum : char {
