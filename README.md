@@ -99,6 +99,30 @@ for (int i = 0; i < list.length; i++) {
 }
 ```
 
+## Error-handling
+
+Every function returns a `status_json_t` type. This contains an error code with the status of the function.
+
+```c
+string_json_t json; // { "username": "myUser", password: "hash_0495399..." }
+ConvertStringToJson(jsonFileContent, &json);
+
+status_json_t errorCode = GetProperty(&json, "createdOn");
+if (errorCode == UNDEFINED_KEY) {
+  // Key 'createdOn' does not exist in the JSON file
+  exit(1);
+}
+```
+
+Not all errors are failures, here is a table of codes and their meaning:
+
+| Error                 | Code | Purpose                 |
+| --------------------- | ---- | ----------------------- |
+| MEMORY_FAILURE        | -1   | Internal library error  |
+| FUNC_SUCCESS          | 0    | Success message         |
+| UNSUPPORTED_OPERATION | 1    | User-error              |
+| UNDEFINED_KEY         | 2    | JSON Key does not exist |
+
 ## Limitations
 
 - Very small buffer size of `USHRT_MAX` supported. Bigger JSON files will fail to parse.

@@ -272,7 +272,7 @@ status_json_t GetJsonProperty3(string_json_t src, string_json_t *dest,
 
         if (strcmp(cStr, target) == 0) {
           GetValue(src, i, dest);
-          break;
+          return FUNC_SUCCESS;
         }
 
         iStartWord = -1;
@@ -280,7 +280,7 @@ status_json_t GetJsonProperty3(string_json_t src, string_json_t *dest,
       }
     }
   }
-  return FUNC_SUCCESS;
+  return UNDEFINED_KEY;
 }
 
 status_json_t GetJsonProperty2(string_json_t *srcDest, const char *target) {
@@ -414,10 +414,10 @@ status_json_t ConvertJsonToStandardType(string_json_t json,
 
 void GetStatusErrorMessage(status_json_t status, char *dest) {
   switch (status) {
-  default:
   case FUNC_SUCCESS:
     snprintf(dest, BUFSIZ, "Function exited with success code %d", status);
     break;
+  case UNDEFINED_KEY:
   case UNSUPPORTED_OPERATION:
   case MEMORY_FAILURE:
     snprintf(dest, BUFSIZ, "Function exited with failure code %d", status);

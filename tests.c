@@ -5,15 +5,27 @@
 #include <time.h>
 
 constexpr char CHECKMARK[] = "\xE2\x9C\x93\n";
-constexpr unsigned char COUNT_CASES = 11;
+constexpr unsigned char COUNT_CASES = 12;
 static unsigned char tests = 0;
 
-static void tryAssert(char *case1, char *case2, const char *message) {
-  assert(strcmp(case1, case2) == 0);
+#define tryAssert(a, b, c)                                                     \
+  _Generic((a), char *: tryAssertString, short: tryAssertShort)((a), (b), (c))
+
+static void printCaseProgress(const char *message) {
   char completeMessage[BUFSIZ];
   snprintf(completeMessage, BUFSIZ, "%s case passed %d/%d %s", message, ++tests,
            COUNT_CASES, CHECKMARK);
   printf("%s", completeMessage);
+}
+
+static void tryAssertString(char *case1, char *case2, const char *message) {
+  assert(strcmp(case1, case2) == 0);
+  printCaseProgress(message);
+}
+
+static void tryAssertShort(short case1, short case2, const char *message) {
+  assert(case1 == case2);
+  printCaseProgress(message);
 }
 
 static status_json_t Test_String(string_json_t json) {
@@ -204,6 +216,17 @@ static status_json_t Test_Nested_Object(string_json_t json) {
   return FUNC_SUCCESS;
 }
 
+static status_json_t Test_Missing_Key(string_json_t json) {
+  string_json_t result;
+  status_json_t status;
+  if ((status = GetProperty(json, &result, "undefinedKey")) != FUNC_SUCCESS) {
+    tryAssert(status, UNDEFINED_KEY, "Missing key");
+    return FUNC_SUCCESS;
+  }
+
+  return UNSUPPORTED_OPERATION;
+}
+
 int main() {
   char cJsonStr[] = "{ \"progName\": \"library\", \"description\": \"\","
                     "\"version\": 1.0, \"tags\": "
@@ -231,6 +254,7 @@ int main() {
   Test_Object(jsonStr);
   Test_Empty_Object(jsonStr);
   Test_Nested_Object(jsonStr);
+  Test_Missing_Key(jsonStr);
 
   float endTime = (float)clock() / CLOCKS_PER_SEC;
   float elapsed = endTime - startTime;

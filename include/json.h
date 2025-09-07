@@ -15,7 +15,8 @@ constexpr unsigned short JSONBUFFSIZE = USHRT_MAX;
 typedef enum : short {
   MEMORY_FAILURE = -1,
   FUNC_SUCCESS = 0,
-  UNSUPPORTED_OPERATION = 1
+  UNSUPPORTED_OPERATION = 1,
+  UNDEFINED_KEY = 2
 } status_json_t;
 typedef enum : char {
   JUNDEFINED = -1,
