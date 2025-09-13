@@ -361,45 +361,41 @@ status_json_t ConvertJsonToStandardType(string_json_t json,
 
       if (i >= json.length - 1) {
         iEndNum = i - 1;
-        goto endIndex;
+        goto endLoop;
       }
 
       if (!isdigit(json.str[i])) {
         iEndNum = i;
-        goto endIndex;
+        goto endLoop;
       }
-
-      continue;
-
-    endIndex:
-      string_json_t result;
-      if ((status = GetWordBetweenIndexes(json, iStartNum, iEndNum, &result,
-                                          false)) != FUNC_SUCCESS) {
-        return status;
-      }
-
-      native_json_type_t baseType = GetUnderlyingType(type);
-      if (baseType == JSON_INT &&
-          (status = ConvertJsonToStandardType(
-               result, baseType, &arr->data.i[iArr++])) != FUNC_SUCCESS) {
-        return status;
-      } else if (baseType == JSON_DOUBLE &&
-                 (status = ConvertJsonToStandardType(result, baseType,
-                                                     &arr->data.d[iArr++])) !=
-                     FUNC_SUCCESS) {
-        return status;
-      } else if (baseType == JSON_LONG &&
-                 (status = ConvertJsonToStandardType(result, baseType,
-                                                     &arr->data.d[iArr++])) !=
-                     FUNC_SUCCESS) {
-        return status;
-      }
-
-      arr->length = iArr;
-      iStartNum = -1;
-      iEndNum = -1;
-      isReading = false;
     }
+
+  endLoop:
+    string_json_t result;
+    if ((status = GetWordBetweenIndexes(json, iStartNum, iEndNum, &result,
+                                        false)) != FUNC_SUCCESS) {
+      return status;
+    }
+
+    native_json_type_t baseType = GetUnderlyingType(type);
+    if (baseType == JSON_INT &&
+        (status = ConvertJsonToStandardType(
+             result, baseType, &arr->data.i[iArr++])) != FUNC_SUCCESS) {
+      return status;
+    } else if (baseType == JSON_DOUBLE &&
+               (status = ConvertJsonToStandardType(
+                    result, baseType, &arr->data.d[iArr++])) != FUNC_SUCCESS) {
+      return status;
+    } else if (baseType == JSON_LONG &&
+               (status = ConvertJsonToStandardType(
+                    result, baseType, &arr->data.d[iArr++])) != FUNC_SUCCESS) {
+      return status;
+    }
+
+    arr->length = iArr;
+    iStartNum = -1;
+    iEndNum = -1;
+    isReading = false;
     break;
 
   case JSON_CHAR_ARR:
