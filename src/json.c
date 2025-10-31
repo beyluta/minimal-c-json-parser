@@ -240,13 +240,18 @@ status_json_t GetJsonProperty3(string_json_t src, string_json_t *dest,
 
   bool isCurrentWordKey = true;
   ssize_t iStartWord = -1, iEndWord = -1;
+  size_t doubleQuoteCount = 0;
   for (size_t i = 0; i < src.length; i++) {
-    if (src.str[i] == COLON && isCurrentWordKey) {
+    if (src.str[i] == DOUBLE_QUOTES) {
+      doubleQuoteCount++;
+    }
+
+    if (src.str[i] == COLON && isCurrentWordKey && doubleQuoteCount % 2 == 0) {
       isCurrentWordKey = false;
       continue;
     }
 
-    if (src.str[i] == COMMA && !isCurrentWordKey) {
+    if (src.str[i] == COMMA && !isCurrentWordKey && doubleQuoteCount % 2 == 0) {
       isCurrentWordKey = true;
       continue;
     }
