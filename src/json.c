@@ -425,3 +425,79 @@ void GetStatusErrorMessage(status_json_t status, char *dest) {
     break;
   }
 }
+
+char *MapStringArray(void (*func)(char *, size_t, void *),
+                     const char *const buffer, void *data, const size_t max) {
+  if (max <= 3) {
+    return nullptr;
+  }
+
+  size_t i = 1, items = 0;
+  char c = buffer[i];
+  const type_json_t type = GetJSONType(c);
+  ssize_t startIndex = -1, endIndex = -1;
+  char tempBuff[JSONBUFFSIZE];
+  bool betweenQuotes = false;
+  while (c != '\0' && i <= max - 2) {
+    c = buffer[i];
+
+    if (type != JSTRING && c == '"') {
+      betweenQuotes = !betweenQuotes;
+    }
+
+    switch (type) {
+    default:
+    case JSTRING: {
+      if (c == '"' && i - 1 > 0 && buffer[i - 1] != '\\') {
+        if (startIndex < 0) {
+          startIndex = i;
+        } else {
+          endIndex = i;
+          goto endLoop;
+        }
+      }
+      break;
+    }
+    case JOBJECT: {
+      if (betweenQuotes) {
+        break;
+      }
+
+      if (c == '{' && startIndex < 0) {
+        startIndex = i - 1;
+      } else if (c == '}') {
+        endIndex = i + 1;
+        goto endLoop;
+      }
+      break;
+    }
+    case JARRAY: {
+      if (betweenQuotes) {
+        break;
+      }
+
+      if (c == '[' && startIndex < 0) {
+        startIndex = i - 1;
+      } else if (c == ']') {
+        endIndex = i + 1;
+        goto endLoop;
+      }
+      break;
+    }
+    }
+
+    i++;
+    continue;
+
+  endLoop:
+    startIndex++;
+    memcpy(tempBuff, &buffer[startIndex], endIndex - startIndex);
+    tempBuff[endIndex - startIndex] = '\0';
+    func(tempBuff, items++, data);
+    startIndex = -1;
+    endIndex = -1;
+    i++;
+  }
+
+  return nullptr;
+}

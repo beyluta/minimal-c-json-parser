@@ -20,6 +20,7 @@ The parser works with a custom `StringJSON` structure and avoids dynamic memory 
 - Parse nested objects and arrays
 - Support for both primitive and structured JSON types
 - Simple error handling via `StatusJSON`
+- Iteration through arrays containing the type `Object`, `Array`, `String`
 
 ## Examples
 
@@ -96,6 +97,24 @@ for (int i = 0; i < list.length; i++) {
   printf("Result is: %f\n", list.data.d[i]);
   // Or                              .i for int
   // Or                              .l for long
+}
+```
+
+## Array Iteration
+
+String arrays can be iterated with a callback function. An optional `void*`
+argument can be passed to the function with additional context.
+
+> Only array items of type `string`, `object`, `array` are supported.
+
+```c
+void Callback(char *item, size_t index, void *) {
+  printf("Item with index %zu has value %s\n", index, value);
+}
+
+void Concat() {
+  char array[] = "[ { \"name\": \"John\" }, { \"name:\": \"Jane\" } ]";
+  MapStringArray(Callback, array, nullptr, sizeof(array) / sizeof(array[0]));
 }
 ```
 

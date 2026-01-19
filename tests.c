@@ -5,7 +5,7 @@
 #include <time.h>
 
 constexpr char CHECKMARK[] = "\xE2\x9C\x93\n";
-constexpr unsigned char COUNT_CASES = 12;
+constexpr unsigned char COUNT_CASES = 13;
 static unsigned char tests = 0;
 
 #define tryAssert(a, b, c)                                                     \
@@ -227,13 +227,42 @@ static status_json_t Test_Missing_Key(string_json_t json) {
   return UNSUPPORTED_OPERATION;
 }
 
+static void ConcatArray(char *item, size_t, void *data) {
+  char *str = (char *)data;
+  const size_t len = strlen(str);
+  const size_t itemLen = strlen(item);
+  memcpy(&str[len], item, len + itemLen);
+  str[len + itemLen] = '\0';
+}
+
+static status_json_t Test_Array_Concat(string_json_t json) {
+  string_json_t result;
+  status_json_t status;
+
+  if ((status = GetProperty(json, &result, "displays")) != FUNC_SUCCESS) {
+    return status;
+  }
+
+  result.str[result.length] = '\0';
+
+  char cResult[512] = {};
+  MapStringArray(ConcatArray, result.str, cResult, result.length);
+
+  tryAssert(cResult, "{ \"name\": \"HDMI-A-1\" }{ \"name\": \"HDMI-A-2\" }",
+            "Array Concatenation");
+
+  return FUNC_SUCCESS;
+}
+
 int main() {
-  char cJsonStr[] = "{ \"progName\": \"library\", \"description\": \"\","
-                    "\"version\": 1.0, \"tags\": "
-                    "[\"C\", \"C++\"], \"metadata\": { \"origin\": "
-                    "\"unknown\", \"device\": { \"pc\": \"Desktop\" } }, "
-                    "\"isCompliant\": false, \"lastUpdated\": null, \"devs\": "
-                    "[], \"other\": {} }";
+  char cJsonStr[] =
+      "{ \"progName\": \"library\", \"description\": \"\","
+      "\"version\": 1.0, \"tags\": "
+      "[\"C\", \"C++\"], \"metadata\": { \"origin\": "
+      "\"unknown\", \"device\": { \"pc\": \"Desktop\" } }, "
+      "\"displays\": [{ \"name\": \"HDMI-A-1\" }, { \"name\": \"HDMI-A-2\" }], "
+      "\"isCompliant\": false, \"lastUpdated\": null, \"devs\": "
+      "[], \"other\": {} }";
 
   string_json_t jsonStr;
   status_json_t status;
@@ -255,6 +284,7 @@ int main() {
   Test_Empty_Object(jsonStr);
   Test_Nested_Object(jsonStr);
   Test_Missing_Key(jsonStr);
+  Test_Array_Concat(jsonStr);
 
   float endTime = (float)clock() / CLOCKS_PER_SEC;
   float elapsed = endTime - startTime;

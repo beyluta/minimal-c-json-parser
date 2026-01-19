@@ -118,4 +118,14 @@ void GetStatusErrorMessage(status_json_t status, char *dest);
 status_json_t ConvertJsonToStandardType(string_json_t json,
                                         native_json_type_t type, void *dest);
 
+/**
+ * @brief Iterates through all items in the JSON array
+ * @param func Callback function to trigger for every item
+ * @param buffer String containing the JSON array
+ * @param data Optional data pointer to pass to the callback
+ * @param max Max size of the array
+ */
+char *MapStringArray(void (*func)(char *, size_t, void *),
+                     const char *const buffer, void *data, const size_t max);
+
 #endif
