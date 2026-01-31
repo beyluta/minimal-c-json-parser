@@ -12,13 +12,15 @@
   EXPAND(GET_PROP_MACRO(__VA_ARGS__, GETPROP3, GETPROP2)(__VA_ARGS__))
 
 constexpr unsigned short JSONBUFFSIZE = USHRT_MAX;
-typedef enum : short {
+typedef enum : short
+{
   MEMORY_FAILURE = -1,
   FUNC_SUCCESS = 0,
   UNSUPPORTED_OPERATION = 1,
   UNDEFINED_KEY = 2
 } status_json_t;
-typedef enum : char {
+typedef enum : char
+{
   JUNDEFINED = -1,
   JNUMBER = 0,
   JOBJECT = 1,
@@ -27,7 +29,8 @@ typedef enum : char {
   JBOOLEAN = 4,
   JNULL = 5
 } type_json_t;
-typedef enum : char {
+typedef enum : char
+{
   JSON_DOUBLE,
   JSON_INT,
   JSON_LONG,
@@ -37,7 +40,8 @@ typedef enum : char {
   JSON_INT_ARR,
   JSON_BOOLEAN
 } native_json_type_t;
-typedef enum : unsigned char {
+typedef enum : unsigned char
+{
   SQUARE_OPEN = '[',
   SQUARE_CLOSE = ']',
   CURLY_OPEN = '{',
@@ -50,19 +54,22 @@ typedef enum : unsigned char {
   SPACE = ' ',
 } token_json_t;
 
-typedef struct {
+typedef struct
+{
   size_t length;
   char str[JSONBUFFSIZE];
   type_json_t type;
 } string_json_t;
 
-typedef union {
+typedef union
+{
   double d[JSONBUFFSIZE];
   long l[JSONBUFFSIZE];
   int i[JSONBUFFSIZE];
 } array_data_t;
 
-typedef struct {
+typedef struct
+{
   array_data_t data;
   int length;
 } array_json_t;

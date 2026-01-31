@@ -1,4 +1,4 @@
-.PHONY: build
+.PHONY: release debug
 
 CC = gcc
 OUT = out
@@ -6,12 +6,12 @@ SRC = tests.c \
 			src/json.c
 DEPS = -Iinclude
 CFLAGS = -xc \
-				 -std=c23 \
-				 -Wextra \
-				 -Wall \
-				 -Werror
+				 -std=c23
+ERRFLAGS = -Wall \
+					-Wextra \
+					-Werror
 
-run: build
-	./$(OUT)
-build:
+release:
+	$(CC) $(CFLAGS) $(DEPS) $(SRC) $(ERRFLAGS) -o $(OUT)
+debug:
 	$(CC) $(CFLAGS) $(DEPS) $(SRC) -o $(OUT)

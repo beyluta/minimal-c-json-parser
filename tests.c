@@ -11,32 +11,38 @@ static unsigned char tests = 0;
 #define tryAssert(a, b, c)                                                     \
   _Generic((a), char *: tryAssertString, short: tryAssertShort)((a), (b), (c))
 
-static void printCaseProgress(const char *message) {
+static void printCaseProgress(const char *message)
+{
   char completeMessage[BUFSIZ];
   snprintf(completeMessage, BUFSIZ, "%s case passed %d/%d %s", message, ++tests,
            COUNT_CASES, CHECKMARK);
   printf("%s", completeMessage);
 }
 
-static void tryAssertString(char *case1, char *case2, const char *message) {
+static void tryAssertString(char *case1, char *case2, const char *message)
+{
   assert(strcmp(case1, case2) == 0);
   printCaseProgress(message);
 }
 
-static void tryAssertShort(short case1, short case2, const char *message) {
+static void tryAssertShort(short case1, short case2, const char *message)
+{
   assert(case1 == case2);
   printCaseProgress(message);
 }
 
-static status_json_t Test_String(string_json_t json) {
+static status_json_t Test_String(string_json_t json)
+{
   string_json_t result;
   status_json_t status;
-  if ((status = GetProperty(json, &result, "progName")) != FUNC_SUCCESS) {
+  if ((status = GetProperty(json, &result, "progName")) != FUNC_SUCCESS)
+  {
     return status;
   }
 
   char cResult[512];
-  if ((status = ConvertJsonToString(result, cResult)) != FUNC_SUCCESS) {
+  if ((status = ConvertJsonToString(result, cResult)) != FUNC_SUCCESS)
+  {
     return status;
   }
 
@@ -45,15 +51,18 @@ static status_json_t Test_String(string_json_t json) {
   return FUNC_SUCCESS;
 }
 
-static status_json_t Test_Empty_String(string_json_t json) {
+static status_json_t Test_Empty_String(string_json_t json)
+{
   string_json_t result;
   status_json_t status;
-  if ((status = GetProperty(json, &result, "description")) != FUNC_SUCCESS) {
+  if ((status = GetProperty(json, &result, "description")) != FUNC_SUCCESS)
+  {
     return status;
   }
 
   char cResult[512];
-  if ((status = ConvertJsonToString(result, cResult)) != FUNC_SUCCESS) {
+  if ((status = ConvertJsonToString(result, cResult)) != FUNC_SUCCESS)
+  {
     return status;
   }
 
@@ -62,16 +71,19 @@ static status_json_t Test_Empty_String(string_json_t json) {
   return FUNC_SUCCESS;
 }
 
-static status_json_t Test_Primitive_Empty_String(string_json_t json) {
+static status_json_t Test_Primitive_Empty_String(string_json_t json)
+{
   string_json_t result;
   status_json_t status;
-  if ((status = GetProperty(json, &result, "description")) != FUNC_SUCCESS) {
+  if ((status = GetProperty(json, &result, "description")) != FUNC_SUCCESS)
+  {
     return status;
   }
 
   char array[512];
   if ((status = ConvertJsonToStandardType(result, JSON_CHAR_ARR, &array)) !=
-      FUNC_SUCCESS) {
+      FUNC_SUCCESS)
+  {
     return status;
   }
 
@@ -80,15 +92,18 @@ static status_json_t Test_Primitive_Empty_String(string_json_t json) {
   return FUNC_SUCCESS;
 }
 
-static status_json_t Test_Boolean(string_json_t json) {
+static status_json_t Test_Boolean(string_json_t json)
+{
   string_json_t result;
   status_json_t status;
-  if ((status = GetProperty(json, &result, "isCompliant")) != FUNC_SUCCESS) {
+  if ((status = GetProperty(json, &result, "isCompliant")) != FUNC_SUCCESS)
+  {
     return status;
   }
 
   char cResult[512];
-  if ((status = ConvertJsonToString(result, cResult)) != FUNC_SUCCESS) {
+  if ((status = ConvertJsonToString(result, cResult)) != FUNC_SUCCESS)
+  {
     return status;
   }
 
@@ -97,15 +112,18 @@ static status_json_t Test_Boolean(string_json_t json) {
   return FUNC_SUCCESS;
 }
 
-static status_json_t Test_Null(string_json_t json) {
+static status_json_t Test_Null(string_json_t json)
+{
   string_json_t result;
   status_json_t status;
-  if ((status = GetProperty(json, &result, "lastUpdated")) != FUNC_SUCCESS) {
+  if ((status = GetProperty(json, &result, "lastUpdated")) != FUNC_SUCCESS)
+  {
     return status;
   }
 
   char cResult[512];
-  if ((status = ConvertJsonToString(result, cResult)) != FUNC_SUCCESS) {
+  if ((status = ConvertJsonToString(result, cResult)) != FUNC_SUCCESS)
+  {
     return status;
   }
 
@@ -113,15 +131,18 @@ static status_json_t Test_Null(string_json_t json) {
   return FUNC_SUCCESS;
 }
 
-static status_json_t Test_Number(string_json_t json) {
+static status_json_t Test_Number(string_json_t json)
+{
   string_json_t result;
   status_json_t status;
-  if ((status = GetProperty(json, &result, "version")) != FUNC_SUCCESS) {
+  if ((status = GetProperty(json, &result, "version")) != FUNC_SUCCESS)
+  {
     return status;
   }
 
   char cResult[512];
-  if ((status = ConvertJsonToString(result, cResult)) != FUNC_SUCCESS) {
+  if ((status = ConvertJsonToString(result, cResult)) != FUNC_SUCCESS)
+  {
     return status;
   }
 
@@ -129,15 +150,18 @@ static status_json_t Test_Number(string_json_t json) {
   return FUNC_SUCCESS;
 }
 
-static status_json_t Test_Array(string_json_t json) {
+static status_json_t Test_Array(string_json_t json)
+{
   string_json_t result;
   status_json_t status;
-  if ((status = GetProperty(json, &result, "tags")) != FUNC_SUCCESS) {
+  if ((status = GetProperty(json, &result, "tags")) != FUNC_SUCCESS)
+  {
     return status;
   }
 
   char cResult[512];
-  if ((status = ConvertJsonToString(result, cResult)) != FUNC_SUCCESS) {
+  if ((status = ConvertJsonToString(result, cResult)) != FUNC_SUCCESS)
+  {
     return status;
   }
 
@@ -146,15 +170,18 @@ static status_json_t Test_Array(string_json_t json) {
   return FUNC_SUCCESS;
 }
 
-static status_json_t Test_Empty_Array(string_json_t json) {
+static status_json_t Test_Empty_Array(string_json_t json)
+{
   string_json_t result;
   status_json_t status;
-  if ((status = GetProperty(json, &result, "devs")) != FUNC_SUCCESS) {
+  if ((status = GetProperty(json, &result, "devs")) != FUNC_SUCCESS)
+  {
     return status;
   }
 
   char cResult[512];
-  if ((status = ConvertJsonToString(result, cResult)) != FUNC_SUCCESS) {
+  if ((status = ConvertJsonToString(result, cResult)) != FUNC_SUCCESS)
+  {
     return status;
   }
 
@@ -163,15 +190,18 @@ static status_json_t Test_Empty_Array(string_json_t json) {
   return FUNC_SUCCESS;
 }
 
-static status_json_t Test_Object(string_json_t json) {
+static status_json_t Test_Object(string_json_t json)
+{
   string_json_t result;
   status_json_t status;
-  if ((status = GetProperty(json, &result, "metadata")) != FUNC_SUCCESS) {
+  if ((status = GetProperty(json, &result, "metadata")) != FUNC_SUCCESS)
+  {
     return status;
   }
 
   char cResult[512];
-  if ((status = ConvertJsonToString(result, cResult)) != FUNC_SUCCESS) {
+  if ((status = ConvertJsonToString(result, cResult)) != FUNC_SUCCESS)
+  {
     return status;
   }
 
@@ -182,15 +212,18 @@ static status_json_t Test_Object(string_json_t json) {
   return FUNC_SUCCESS;
 }
 
-static status_json_t Test_Empty_Object(string_json_t json) {
+static status_json_t Test_Empty_Object(string_json_t json)
+{
   string_json_t result;
   status_json_t status;
-  if ((status = GetProperty(json, &result, "other")) != FUNC_SUCCESS) {
+  if ((status = GetProperty(json, &result, "other")) != FUNC_SUCCESS)
+  {
     return status;
   }
 
   char cResult[512];
-  if ((status = ConvertJsonToString(result, cResult)) != FUNC_SUCCESS) {
+  if ((status = ConvertJsonToString(result, cResult)) != FUNC_SUCCESS)
+  {
     return status;
   }
 
@@ -199,15 +232,18 @@ static status_json_t Test_Empty_Object(string_json_t json) {
   return FUNC_SUCCESS;
 }
 
-static status_json_t Test_Nested_Object(string_json_t json) {
+static status_json_t Test_Nested_Object(string_json_t json)
+{
   string_json_t result;
   status_json_t status;
-  if ((status = GetProperty(json, &result, "device")) != FUNC_SUCCESS) {
+  if ((status = GetProperty(json, &result, "device")) != FUNC_SUCCESS)
+  {
     return status;
   }
 
   char cResult[512];
-  if ((status = ConvertJsonToString(result, cResult)) != FUNC_SUCCESS) {
+  if ((status = ConvertJsonToString(result, cResult)) != FUNC_SUCCESS)
+  {
     return status;
   }
 
@@ -216,10 +252,12 @@ static status_json_t Test_Nested_Object(string_json_t json) {
   return FUNC_SUCCESS;
 }
 
-static status_json_t Test_Missing_Key(string_json_t json) {
+static status_json_t Test_Missing_Key(string_json_t json)
+{
   string_json_t result;
   status_json_t status;
-  if ((status = GetProperty(json, &result, "undefinedKey")) != FUNC_SUCCESS) {
+  if ((status = GetProperty(json, &result, "undefinedKey")) != FUNC_SUCCESS)
+  {
     tryAssert(status, UNDEFINED_KEY, "Missing key");
     return FUNC_SUCCESS;
   }
@@ -227,7 +265,8 @@ static status_json_t Test_Missing_Key(string_json_t json) {
   return UNSUPPORTED_OPERATION;
 }
 
-static void ConcatArray(char *item, size_t, void *data) {
+static void ConcatArray(char *item, size_t, void *data)
+{
   char *str = (char *)data;
   const size_t len = strlen(str);
   const size_t itemLen = strlen(item);
@@ -235,11 +274,13 @@ static void ConcatArray(char *item, size_t, void *data) {
   str[len + itemLen] = '\0';
 }
 
-static status_json_t Test_Array_Concat(string_json_t json) {
+static status_json_t Test_Array_Concat(string_json_t json)
+{
   string_json_t result;
   status_json_t status;
 
-  if ((status = GetProperty(json, &result, "displays")) != FUNC_SUCCESS) {
+  if ((status = GetProperty(json, &result, "displays")) != FUNC_SUCCESS)
+  {
     return status;
   }
 
@@ -254,7 +295,8 @@ static status_json_t Test_Array_Concat(string_json_t json) {
   return FUNC_SUCCESS;
 }
 
-int main() {
+int main()
+{
   char cJsonStr[] =
       "{ \"progName\": \"library\", \"description\": \"\","
       "\"version\": 1.0, \"tags\": "
@@ -266,7 +308,8 @@ int main() {
 
   string_json_t jsonStr;
   status_json_t status;
-  if ((status = ConvertStringToJson(cJsonStr, &jsonStr)) != FUNC_SUCCESS) {
+  if ((status = ConvertStringToJson(cJsonStr, &jsonStr)) != FUNC_SUCCESS)
+  {
     return status;
   }
 

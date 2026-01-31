@@ -5,7 +5,10 @@
 #include <string.h>
 #include <sys/types.h>
 
-static status_json_t TrimEnds(string_json_t *src) {
+// Private members
+
+static status_json_t TrimEnds(string_json_t *src)
+{
   if (src->length <= 2)
     return MEMORY_FAILURE;
   memcpy(src->str, &src->str[1], src->length - 2);
@@ -15,7 +18,8 @@ static status_json_t TrimEnds(string_json_t *src) {
 
 static status_json_t GetWordBetweenIndexes(const string_json_t src,
                                            const size_t start, const size_t end,
-                                           string_json_t *dest, bool trimEnds) {
+                                           string_json_t *dest, bool trimEnds)
+{
   const ssize_t length = end - start + 1;
   if (length < 1)
     return MEMORY_FAILURE;
@@ -24,41 +28,18 @@ static status_json_t GetWordBetweenIndexes(const string_json_t src,
   dest->length = length;
 
   status_json_t status;
-  if (trimEnds && (status = TrimEnds(dest)) != FUNC_SUCCESS) {
+  if (trimEnds && (status = TrimEnds(dest)) != FUNC_SUCCESS)
+  {
     return status;
   }
 
   return FUNC_SUCCESS;
 }
 
-status_json_t ConvertJsonToString(string_json_t src, char *dest) {
-  // Passing an empty string if propety is empty
-  if (src.length == 2 && src.type == JSTRING) {
-    memcpy(dest, "", 1);
-    return FUNC_SUCCESS;
-  }
-
-  if (src.length >= JSONBUFFSIZE)
-    return MEMORY_FAILURE;
-
-  memcpy(dest, src.str, src.length);
-  dest[src.length] = '\0';
-  return FUNC_SUCCESS;
-}
-
-status_json_t ConvertStringToJson(const char *src, string_json_t *dest) {
-  const size_t size = strlen(src);
-  if (size >= JSONBUFFSIZE)
-    return MEMORY_FAILURE;
-  for (size_t i = 0; i < size; i++) {
-    dest->str[i] = src[i];
-  }
-  dest->length = size;
-  return FUNC_SUCCESS;
-}
-
-static type_json_t GetJSONType(const char c) {
-  switch ((int)c) {
+static type_json_t GetJSONType(const char c)
+{
+  switch ((int)c)
+  {
   default:
     return JNUMBER;
   case DOUBLE_QUOTES:
@@ -75,8 +56,10 @@ static type_json_t GetJSONType(const char c) {
   }
 }
 
-static bool TypeRequiresDelimiter(type_json_t type) {
-  switch (type) {
+static bool TypeRequiresDelimiter(type_json_t type)
+{
+  switch (type)
+  {
   case JNUMBER:
   case JBOOLEAN:
   case JNULL:
@@ -87,7 +70,8 @@ static bool TypeRequiresDelimiter(type_json_t type) {
 }
 
 static status_json_t GetValue(string_json_t src, const ssize_t iStartAt,
-                              string_json_t *dest) {
+                              string_json_t *dest)
+{
   if (iStartAt < 0 || src.length == 0)
     return MEMORY_FAILURE;
 
@@ -96,33 +80,39 @@ static status_json_t GetValue(string_json_t src, const ssize_t iStartAt,
   bool isCurrentWordValue = false;
   bool isCurrentIndexInsideDoubleQuotes = false;
   type_json_t type = JUNDEFINED;
-  for (size_t i = iStartAt + 1; i < src.length; i++) {
+  for (size_t i = iStartAt + 1; i < src.length; i++)
+  {
     // Ignoring spaces unless the type requires delimiters
     if (src.str[i] == SPACE && TypeRequiresDelimiter(type))
       continue;
 
     // This is needed so that we know that we can start reading the value
-    if (src.str[i] == COLON) {
+    if (src.str[i] == COLON)
+    {
       isCurrentWordValue = true;
       continue;
     }
 
     // Skip this iteration if the still haven't found a value to read
-    if (!isCurrentWordValue) {
+    if (!isCurrentWordValue)
+    {
       continue;
     }
 
     // Make sure to assign a type to the current json being read
-    if (type == JUNDEFINED) {
+    if (type == JUNDEFINED)
+    {
       type = GetJSONType(src.str[i]);
       dest->type = type;
       iStartWord = i;
 
-      if (type == JOBJECT || type == JARRAY) {
+      if (type == JOBJECT || type == JARRAY)
+      {
         fieldNestingLevel++;
       }
 
-      if (type != JNUMBER) {
+      if (type != JNUMBER)
+      {
         continue;
       }
     }
@@ -130,20 +120,24 @@ static status_json_t GetValue(string_json_t src, const ssize_t iStartAt,
     // Strings are the most basic type to parse because we just need to return
     // the indexes of the start and end of the double quotes
     if (src.str[i] == DOUBLE_QUOTES && src.str[i - 1] != BACKSLASH &&
-        type == JSTRING) {
+        type == JSTRING)
+    {
       iEndWord = i;
       break;
     }
 
     // Booleans and nulls are basically the same. We just need to read until the
     // end of the stream and return whatever has been read
-    if (type == JBOOLEAN || type == JNULL) {
-      if (src.str[i] == SPACE || src.str[i] == COMMA) {
+    if (type == JBOOLEAN || type == JNULL)
+    {
+      if (src.str[i] == SPACE || src.str[i] == COMMA)
+      {
         iEndWord = i - 1;
         break;
       }
 
-      if (i >= src.length - 1) {
+      if (i >= src.length - 1)
+      {
         iEndWord = i;
         break;
       }
@@ -152,17 +146,21 @@ static status_json_t GetValue(string_json_t src, const ssize_t iStartAt,
     // Numbers are a little trickier, we need to make sure to return the number
     // as soon as there aren't any digits left in the current readable stream.
     // This excludes some annoyances like the period to declare decimal values
-    if (type == JNUMBER) {
-      if (src.str[i] == PERIOD) {
+    if (type == JNUMBER)
+    {
+      if (src.str[i] == PERIOD)
+      {
         continue;
       }
 
-      if (!isdigit(src.str[i]) || src.str[i] == SPACE) {
+      if (!isdigit(src.str[i]) || src.str[i] == SPACE)
+      {
         iEndWord = i - 1;
         break;
       }
 
-      if (i >= src.length - 1) {
+      if (i >= src.length - 1)
+      {
         iEndWord = i;
         break;
       }
@@ -172,22 +170,27 @@ static status_json_t GetValue(string_json_t src, const ssize_t iStartAt,
     // to make sure to disregard any values inside double quotes since these are
     // just user strings. As well as keep track of the amount of square brackets
     // for nested arrays
-    if (type == JARRAY) {
+    if (type == JARRAY)
+    {
       if (src.str[i] == DOUBLE_QUOTES && i - 1 > 0 &&
-          src.str[i - 1] != BACKSLASH) {
+          src.str[i - 1] != BACKSLASH)
+      {
         isCurrentIndexInsideDoubleQuotes = !isCurrentIndexInsideDoubleQuotes;
       }
 
       if (isCurrentIndexInsideDoubleQuotes)
         continue;
 
-      if (src.str[i] == SQUARE_OPEN) {
+      if (src.str[i] == SQUARE_OPEN)
+      {
         fieldNestingLevel++;
       }
 
-      if (src.str[i] == SQUARE_CLOSE) {
+      if (src.str[i] == SQUARE_CLOSE)
+      {
         fieldNestingLevel--;
-        if (fieldNestingLevel == 0) {
+        if (fieldNestingLevel == 0)
+        {
           iEndWord = i;
           break;
         }
@@ -196,9 +199,11 @@ static status_json_t GetValue(string_json_t src, const ssize_t iStartAt,
 
     // Objects are basically the same as arrays but to make the code more
     // readable I separated them, but they just do the same thing essentially
-    if (type == JOBJECT) {
+    if (type == JOBJECT)
+    {
       if (src.str[i] == DOUBLE_QUOTES && i - 1 > 0 &&
-          src.str[i - 1] != BACKSLASH) {
+          src.str[i - 1] != BACKSLASH)
+      {
         isCurrentIndexInsideDoubleQuotes = !isCurrentIndexInsideDoubleQuotes;
       }
 
@@ -208,9 +213,11 @@ static status_json_t GetValue(string_json_t src, const ssize_t iStartAt,
       if (src.str[i] == CURLY_OPEN)
         fieldNestingLevel++;
 
-      if (src.str[i] == CURLY_CLOSE) {
+      if (src.str[i] == CURLY_CLOSE)
+      {
         fieldNestingLevel--;
-        if (fieldNestingLevel == 0) {
+        if (fieldNestingLevel == 0)
+        {
           iEndWord = i;
           break;
         }
@@ -220,62 +227,123 @@ static status_json_t GetValue(string_json_t src, const ssize_t iStartAt,
 
   status_json_t status;
   if ((status = GetWordBetweenIndexes(src, iStartWord, iEndWord, dest,
-                                      type == JSTRING)) != FUNC_SUCCESS) {
+                                      type == JSTRING)) != FUNC_SUCCESS)
+  {
     return status;
   }
 
   return FUNC_SUCCESS;
 }
 
+static native_json_type_t GetUnderlyingType(native_json_type_t type)
+{
+  switch (type)
+  {
+  default:
+  case JSON_INT_ARR:
+    return JSON_INT;
+  case JSON_DOUBLE_ARR:
+    return JSON_DOUBLE;
+  case JSON_LONG_ARR:
+    return JSON_LONG;
+  }
+}
+
+// Public members
+
+status_json_t ConvertJsonToString(string_json_t src, char *const dest)
+{
+  // Passing an empty string if propety is empty
+  if (src.length == 2 && src.type == JSTRING)
+  {
+    memcpy(dest, "", 1);
+    return FUNC_SUCCESS;
+  }
+
+  if (src.length >= JSONBUFFSIZE)
+    return MEMORY_FAILURE;
+
+  memcpy(dest, src.str, src.length);
+  dest[src.length] = '\0';
+  return FUNC_SUCCESS;
+}
+
+status_json_t ConvertStringToJson(const char *src, string_json_t *dest)
+{
+  const size_t size = strlen(src);
+  if (size >= JSONBUFFSIZE)
+    return MEMORY_FAILURE;
+  for (size_t i = 0; i < size; i++)
+  {
+    dest->str[i] = src[i];
+  }
+  dest->length = size;
+  return FUNC_SUCCESS;
+}
+
 status_json_t GetJsonProperty3(string_json_t src, string_json_t *dest,
-                               const char *target) {
-  if (src.length <= 0 || strlen(target) >= JSONBUFFSIZE) {
+                               const char *target)
+{
+  if (src.length <= 0 || strlen(target) >= JSONBUFFSIZE)
+  {
     return MEMORY_FAILURE;
   }
 
   status_json_t status;
-  if ((status = TrimEnds(&src)) != FUNC_SUCCESS) {
+  if ((status = TrimEnds(&src)) != FUNC_SUCCESS)
+  {
     return status;
   }
 
   bool isCurrentWordKey = true;
   ssize_t iStartWord = -1, iEndWord = -1;
   size_t doubleQuoteCount = 0;
-  for (size_t i = 0; i < src.length; i++) {
-    if (src.str[i] == DOUBLE_QUOTES) {
+  for (size_t i = 0; i < src.length; i++)
+  {
+    if (src.str[i] == DOUBLE_QUOTES)
+    {
       doubleQuoteCount++;
     }
 
-    if (src.str[i] == COLON && isCurrentWordKey && doubleQuoteCount % 2 == 0) {
+    if (src.str[i] == COLON && isCurrentWordKey && doubleQuoteCount % 2 == 0)
+    {
       isCurrentWordKey = false;
       continue;
     }
 
-    if (src.str[i] == COMMA && !isCurrentWordKey && doubleQuoteCount % 2 == 0) {
+    if (src.str[i] == COMMA && !isCurrentWordKey && doubleQuoteCount % 2 == 0)
+    {
       isCurrentWordKey = true;
       continue;
     }
 
-    if (src.str[i] == DOUBLE_QUOTES && isCurrentWordKey) {
-      if (iStartWord < 0) {
+    if (src.str[i] == DOUBLE_QUOTES && isCurrentWordKey)
+    {
+      if (iStartWord < 0)
+      {
         iStartWord = i;
         continue;
-      } else if (iEndWord < 0) {
+      }
+      else if (iEndWord < 0)
+      {
         iEndWord = i;
 
         string_json_t value;
         status_json_t status;
         if ((status = GetWordBetweenIndexes(src, iStartWord, iEndWord, &value,
-                                            true)) != FUNC_SUCCESS) {
+                                            true)) != FUNC_SUCCESS)
+        {
           return MEMORY_FAILURE;
         }
 
         char cStr[JSONBUFFSIZE];
-        if ((status = ConvertJsonToString(value, cStr)) != FUNC_SUCCESS) {
+        if ((status = ConvertJsonToString(value, cStr)) != FUNC_SUCCESS)
+        {
           return MEMORY_FAILURE;
         }
 
-        if (strcmp(cStr, target) == 0) {
+        if (strcmp(cStr, target) == 0)
+        {
           GetValue(src, i, dest);
           return FUNC_SUCCESS;
         }
@@ -288,30 +356,22 @@ status_json_t GetJsonProperty3(string_json_t src, string_json_t *dest,
   return UNDEFINED_KEY;
 }
 
-status_json_t GetJsonProperty2(string_json_t *srcDest, const char *target) {
+status_json_t GetJsonProperty2(string_json_t *srcDest, const char *target)
+{
   return GetJsonProperty3(*srcDest, srcDest, target);
 }
 
-static native_json_type_t GetUnderlyingType(native_json_type_t type) {
-  switch (type) {
-  default:
-  case JSON_INT_ARR:
-    return JSON_INT;
-  case JSON_DOUBLE_ARR:
-    return JSON_DOUBLE;
-  case JSON_LONG_ARR:
-    return JSON_LONG;
-  }
-}
-
 status_json_t ConvertJsonToStandardType(string_json_t json,
-                                        native_json_type_t type, void *dest) {
+                                        native_json_type_t type, void *dest)
+{
   char temp[BUFSIZ];
   status_json_t status;
 
-  switch (type) {
+  switch (type)
+  {
   case JSON_DOUBLE:
-    if ((status = ConvertJsonToString(json, temp)) != FUNC_SUCCESS) {
+    if ((status = ConvertJsonToString(json, temp)) != FUNC_SUCCESS)
+    {
       return status;
     }
 
@@ -319,7 +379,8 @@ status_json_t ConvertJsonToStandardType(string_json_t json,
     break;
 
   case JSON_LONG:
-    if ((status = ConvertJsonToString(json, temp)) != FUNC_SUCCESS) {
+    if ((status = ConvertJsonToString(json, temp)) != FUNC_SUCCESS)
+    {
       return status;
     }
 
@@ -327,7 +388,8 @@ status_json_t ConvertJsonToStandardType(string_json_t json,
     break;
 
   case JSON_INT:
-    if ((status = ConvertJsonToString(json, temp)) != FUNC_SUCCESS) {
+    if ((status = ConvertJsonToString(json, temp)) != FUNC_SUCCESS)
+    {
       return status;
     }
 
@@ -335,7 +397,8 @@ status_json_t ConvertJsonToStandardType(string_json_t json,
     break;
 
   case JSON_BOOLEAN:
-    if ((status = ConvertJsonToString(json, temp)) != FUNC_SUCCESS) {
+    if ((status = ConvertJsonToString(json, temp)) != FUNC_SUCCESS)
+    {
       return status;
     }
 
@@ -346,7 +409,8 @@ status_json_t ConvertJsonToStandardType(string_json_t json,
   case JSON_LONG_ARR:
   case JSON_INT_ARR:
     array_json_t *arr = (array_json_t *)dest;
-    if (json.length < 3) {
+    if (json.length < 3)
+    {
       arr->length = 0; // Empty array
       break;
     }
@@ -354,22 +418,27 @@ status_json_t ConvertJsonToStandardType(string_json_t json,
     bool isReading = false;
     ssize_t iStartNum = -1, iEndNum = -1;
     size_t iArr = 0;
-    for (size_t i = 0; i < json.length; i++) {
-      if (isdigit(json.str[i]) && !isReading) {
+    for (size_t i = 0; i < json.length; i++)
+    {
+      if (isdigit(json.str[i]) && !isReading)
+      {
         isReading = true;
         iStartNum = i;
       }
 
-      if (json.str[i] == PERIOD || !isReading) {
+      if (json.str[i] == PERIOD || !isReading)
+      {
         continue;
       }
 
-      if (i >= json.length - 1) {
+      if (i >= json.length - 1)
+      {
         iEndNum = i - 1;
         goto endLoop;
       }
 
-      if (!isdigit(json.str[i])) {
+      if (!isdigit(json.str[i]))
+      {
         iEndNum = i;
         goto endLoop;
       }
@@ -378,22 +447,28 @@ status_json_t ConvertJsonToStandardType(string_json_t json,
   endLoop:
     string_json_t result;
     if ((status = GetWordBetweenIndexes(json, iStartNum, iEndNum, &result,
-                                        false)) != FUNC_SUCCESS) {
+                                        false)) != FUNC_SUCCESS)
+    {
       return status;
     }
 
     native_json_type_t baseType = GetUnderlyingType(type);
     if (baseType == JSON_INT &&
         (status = ConvertJsonToStandardType(
-             result, baseType, &arr->data.i[iArr++])) != FUNC_SUCCESS) {
+             result, baseType, &arr->data.i[iArr++])) != FUNC_SUCCESS)
+    {
       return status;
-    } else if (baseType == JSON_DOUBLE &&
-               (status = ConvertJsonToStandardType(
-                    result, baseType, &arr->data.d[iArr++])) != FUNC_SUCCESS) {
+    }
+    else if (baseType == JSON_DOUBLE &&
+             (status = ConvertJsonToStandardType(
+                  result, baseType, &arr->data.d[iArr++])) != FUNC_SUCCESS)
+    {
       return status;
-    } else if (baseType == JSON_LONG &&
-               (status = ConvertJsonToStandardType(
-                    result, baseType, &arr->data.d[iArr++])) != FUNC_SUCCESS) {
+    }
+    else if (baseType == JSON_LONG &&
+             (status = ConvertJsonToStandardType(
+                  result, baseType, &arr->data.d[iArr++])) != FUNC_SUCCESS)
+    {
       return status;
     }
 
@@ -404,7 +479,8 @@ status_json_t ConvertJsonToStandardType(string_json_t json,
     break;
 
   case JSON_CHAR_ARR:
-    if ((status = ConvertJsonToString(json, dest)) != FUNC_SUCCESS) {
+    if ((status = ConvertJsonToString(json, dest)) != FUNC_SUCCESS)
+    {
       return status;
     }
     break;
@@ -413,8 +489,10 @@ status_json_t ConvertJsonToStandardType(string_json_t json,
   return FUNC_SUCCESS;
 }
 
-void GetStatusErrorMessage(status_json_t status, char *dest) {
-  switch (status) {
+void GetStatusErrorMessage(status_json_t status, char *dest)
+{
+  switch (status)
+  {
   case FUNC_SUCCESS:
     snprintf(dest, BUFSIZ, "Function exited with success code %d", status);
     break;
@@ -427,8 +505,10 @@ void GetStatusErrorMessage(status_json_t status, char *dest) {
 }
 
 char *MapStringArray(void (*func)(char *, size_t, void *),
-                     const char *const buffer, void *data, const size_t max) {
-  if (max <= 3) {
+                     const char *const buffer, void *data, const size_t max)
+{
+  if (max <= 3)
+  {
     return nullptr;
   }
 
@@ -438,47 +518,65 @@ char *MapStringArray(void (*func)(char *, size_t, void *),
   ssize_t startIndex = -1, endIndex = -1;
   char tempBuff[JSONBUFFSIZE];
   bool betweenQuotes = false;
-  while (c != '\0' && i <= max - 2) {
+  while (c != '\0' && i <= max - 2)
+  {
     c = buffer[i];
 
-    if (type != JSTRING && c == '"') {
+    if (type != JSTRING && c == '"')
+    {
       betweenQuotes = !betweenQuotes;
     }
 
-    switch (type) {
+    switch (type)
+    {
     default:
-    case JSTRING: {
-      if (c == '"' && i - 1 > 0 && buffer[i - 1] != '\\') {
-        if (startIndex < 0) {
+    case JSTRING:
+    {
+      if (c == '"' && i - 1 > 0 && buffer[i - 1] != '\\')
+      {
+        if (startIndex < 0)
+        {
           startIndex = i;
-        } else {
+        }
+        else
+        {
           endIndex = i;
           goto endLoop;
         }
       }
       break;
     }
-    case JOBJECT: {
-      if (betweenQuotes) {
+    case JOBJECT:
+    {
+      if (betweenQuotes)
+      {
         break;
       }
 
-      if (c == '{' && startIndex < 0) {
+      if (c == '{' && startIndex < 0)
+      {
         startIndex = i - 1;
-      } else if (c == '}') {
+      }
+      else if (c == '}')
+      {
         endIndex = i + 1;
         goto endLoop;
       }
       break;
     }
-    case JARRAY: {
-      if (betweenQuotes) {
+    case JARRAY:
+    {
+      if (betweenQuotes)
+      {
         break;
       }
 
-      if (c == '[' && startIndex < 0) {
+      if (c == '[' && startIndex < 0)
+      {
         startIndex = i - 1;
-      } else if (c == ']') {
+      }
+      else if (c == ']')
+      {
         endIndex = i + 1;
         goto endLoop;
       }
