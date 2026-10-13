@@ -257,8 +257,8 @@ status_json_t ConvertJsonToString(string_json_t src, char *const dest)
   // 1. String consists of only two "" (double quotes)
   // 2. String length is zero (0)
   if (src.type == JSTRING &&
-          (src.length == 2 && src.str[0] == '"' && src.str[1] == '"') ||
-      (src.length == 0))
+      ((src.length == 2 && src.str[0] == '"' && src.str[1] == '"') ||
+       (src.length == 0)))
   {
     memcpy(dest, "", 1);
     return FUNC_SUCCESS;
