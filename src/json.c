@@ -253,8 +253,12 @@ static native_json_type_t GetUnderlyingType(native_json_type_t type)
 
 status_json_t ConvertJsonToString(string_json_t src, char *const dest)
 {
-  // Passing an empty string if propety is empty
-  if (src.length == 2 && src.type == JSTRING)
+  // There are two cases in which an empty string should be returned:
+  // 1. String consists of only two "" (double quotes)
+  // 2. String length is zero (0)
+  if (src.type == JSTRING &&
+          (src.length == 2 && src.str[0] == '"' && src.str[1] == '"') ||
+      (src.length == 0))
   {
     memcpy(dest, "", 1);
     return FUNC_SUCCESS;
